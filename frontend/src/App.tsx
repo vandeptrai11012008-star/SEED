@@ -78,8 +78,8 @@ export default function App() {
           <aside className={`flow-guide ${legendOpen ? "" : "collapsed"}`} aria-label="Heat flow legend">
             <button className="guide-heading" onClick={() => setLegendOpen(!legendOpen)} aria-expanded={legendOpen}>The heat recovery loop <span>{legendOpen ? "−" : "+"}</span></button>
             {legendOpen && <>
-              <div className="flow-key"><i className="cold" />Cool water / Return</div>
-              <div className="flow-key"><i className="hot" />Hot water / Supply</div>
+              <div className="flow-key"><i className="cold" />Cool water · GPU supply / heating return</div>
+              <div className="flow-key"><i className="hot" />Hot water · GPU return / heating supply</div>
               <ol>{[
                 "Cool water is pumped up to all three GPU floors.",
                 "Servers transfer waste heat into the cooling circuit.",
@@ -98,7 +98,7 @@ export default function App() {
             <button onClick={() => useStore.getState().setCameraPreset("underground")}>B2 plant</button>
             <button aria-pressed={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}>{toolsOpen ? "Close details" : "Details"}</button>
           </nav>
-          <div className="scene-footnote"><span className="status-dot" />{loading ? "Running simulation…" : "Simplified physics simulation"}<span>Drag to orbit · Scroll to zoom</span></div>
+          <div className="scene-footnote"><span className="status-dot" />{loading ? "Running simulation…" : "Simplified physics simulation"}<span>Illustrative scale · Explore the 1:1 model in Simulation view</span></div>
         </>}
         {loading && <div className="loading">Loading…</div>}
         {error && <div className="error">Backend error: {error}</div>}

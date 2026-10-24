@@ -158,6 +158,10 @@ class SimplifiedPhysicsEngine:
         hx_secondary_out_C: float,
         secondary_supply_C: float,
         secondary_return_C: float,
+        *,
+        auxiliary_active: bool = False,
+        buffer_charge_flow: float = 0.0,
+        buffer_discharge_flow: float = 0.0,
     ) -> dict[str, dict[str, float]]:
         states: dict[str, dict[str, float]] = {}
         for circuit_name, circuit in self.network["circuits"].items():
@@ -165,6 +169,10 @@ class SimplifiedPhysicsEngine:
                 role = segment.get("role", "")
                 if circuit_name == "primary":
                     flow = primary_flow * segment.get("branch_fraction", 1.0)
+                    if role in {"rejection", "rejection_return"} and not auxiliary_active:
+                        flow = 0.0
+                    if role == "bypass" and auxiliary_active:
+                        flow = 0.0
                     if role in {"return", "rejection"}:
                         temp = primary_return_C
                     elif role == "rack_heat_pickup":
@@ -177,9 +185,13 @@ class SimplifiedPhysicsEngine:
                         "pipe_soil_heating_001", "pipe_buried_return_001",
                     }
                     flow = (greenhouse_flow if greenhouse else secondary_flow) * segment.get("branch_fraction", 1.0)
+                    if role == "storage_charge":
+                        flow = buffer_charge_flow
+                    elif role == "storage_discharge":
+                        flow = buffer_discharge_flow
                     if role == "hx_outlet":
                         temp = hx_secondary_out_C
-                    elif role in {"return", "rejection_return"}:
+                    elif role in {"return", "rejection_return", "sidestream"}:
                         temp = secondary_return_C
                     else:
                         temp = secondary_supply_C
@@ -588,6 +600,9 @@ class SimplifiedPhysicsEngine:
                 phys.k_to_c(actual_primary_supply_K), phys.k_to_c(primary_return_K),
                 phys.k_to_c(hx_secondary_out_K), phys.k_to_c(secondary_supply_K),
                 phys.k_to_c(secondary_return_K),
+                auxiliary_active=aux_rejected_W > 1e-6,
+                buffer_charge_flow=phys.mass_flow_for_heat(buffer_charge_W, cp, secondary_delta_T),
+                buffer_discharge_flow=buffer_flow,
             )
             sensor_states: dict[str, dict[str, float | str]] = {
                 "sensor_primary_supply_T": {"value": phys.k_to_c(actual_primary_supply_K), "unit": "degC"},

@@ -1,9 +1,24 @@
+import { useEffect } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, SRGBColorSpace } from "three";
-import { Canvas } from "@react-three/fiber";
-import { ContactShadows, GizmoHelper, GizmoViewport, Grid, OrbitControls } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { ContactShadows, Environment, Lightformer, GizmoHelper, GizmoViewport, Grid, OrbitControls } from "@react-three/drei";
 import { useStore } from "../store";
 import Building from "./Building";
 import CameraRig from "./CameraRig";
+
+// Only equipment/view changes affect shadows; flowing arrows do not cast them.
+function StaticShadows() {
+  const gl = useThree(s => s.gl);
+  const config = useStore(s => s.config);
+  const cutaway = useStore(s => s.cutaway);
+  const floors = useStore(s => s.visibleFloors);
+  const illustration = useStore(s => s.illustration);
+  useEffect(() => {
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true;
+  }, [gl, config, cutaway, floors, illustration]);
+  return null;
+}
 
 export default function Viewer() {
   const illustration = useStore((state) => state.illustration);
@@ -42,6 +57,12 @@ export default function Viewer() {
         shadow-camera-far={180}
         shadow-bias={-0.00008}
       />
+      <Environment resolution={128} frames={1}>
+        <Lightformer form="rect" intensity={2.5} position={[0, 15, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[35, 35, 1]} />
+        <Lightformer form="rect" intensity={2} position={[-20, 5, 15]} rotation={[0, Math.PI / 3, 0]} scale={[20, 20, 1]} color="#d5edff" />
+        <Lightformer form="rect" intensity={1.3} position={[20, 5, -15]} rotation={[0, -Math.PI / 3, 0]} scale={[15, 20, 1]} color="#ffe7bf" />
+      </Environment>
+      <StaticShadows />
       <Building />
       {!illustration && <ContactShadows position={[18, 0.015, 0]} opacity={0.32} scale={105} blur={2.4} far={40} />}
       {!illustration && <Grid

@@ -23,7 +23,7 @@ function SteelMember({
   return (
     <mesh position={position} castShadow receiveShadow>
       <boxGeometry args={scale} />
-      <meshStandardMaterial color="#667681" metalness={0.82} roughness={0.28} />
+      <meshStandardMaterial color="#3e4a53" metalness={0.82} roughness={0.28} />
     </mesh>
   );
 }
@@ -70,9 +70,7 @@ export default function Architecture({
 
             {/* Perimeter edge beam makes every floor legible in cutaway. */}
             <SteelMember position={[0, z1 - 0.22, -10.75]} scale={[35.5, 0.35, 0.35]} />
-            {!cutaway && (
-              <SteelMember position={[0, z1 - 0.22, 10.75]} scale={[35.5, 0.35, 0.35]} />
-            )}
+            <SteelMember position={[0, z1 - 0.22, 10.75]} scale={[35.5, 0.35, 0.35]} />
             <SteelMember position={[-17.75, z1 - 0.22, 0]} scale={[0.35, 0.35, 21.5]} />
             <SteelMember position={[17.75, z1 - 0.22, 0]} scale={[0.35, 0.35, 21.5]} />
 
@@ -154,7 +152,7 @@ export default function Architecture({
               <EngineeringLabel
                 text={({ f3: "3F · AI DATA CENTER", f2: "2F · AI DATA CENTER", f1: "1F · AI DATA CENTER", gf: "GF · ROBOT LAB", b1: "B1 · SEED RESEARCH", b2: "B2 · HEAT EXCHANGER" })[floor.id]}
                 subtext={isGpu ? "GPU servers / Liquid cooling" : floor.id === "b2" ? "Underground mechanical plant" : "Recovered heat / Research zone"}
-                position={[-16, z0 + height - 0.9, 11.5]}
+                position={[-17.5, z0 + height / 2, 11.8]}
                 accent={isGpu ? "#45a8ff" : isBasement ? "#d4a96a" : "#9dd7ff"}
               />
             )}

@@ -108,6 +108,10 @@ function PlateHeatExchanger({ object, selected, onSelect }: { object: SceneObjec
           <meshStandardMaterial color="#26323b" metalness={0.8} roughness={0.3} />
         </mesh>
       ))}
+      {[-1.2, 1.2].flatMap(x => [-.55, .55].map(y => <mesh key={`${x}-${y}`} position={[x, y, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[.2, .2, .5, 16]} />
+        <meshStandardMaterial color={y > 0 ? "#ff302a" : "#087dff"} metalness={.65} />
+      </mesh>))}
       {selected && <EngineeringLabel text={object.id} subtext="Plate heat exchanger" position={[0, 1.8, 0]} accent="#c584f3" />}
     </group>
   );
@@ -141,6 +145,16 @@ function Tank({ object, step, selected, onSelect }: { object: SceneObject; step?
         <cylinderGeometry args={[isBuffer ? 1.7 : 1.15, isBuffer ? 1.7 : 1.15, isBuffer ? 3.2 : 2.8, 40]} />
         <meshStandardMaterial color={isBuffer ? "#d94034" : "#087dff"} metalness={0.45} roughness={0.24} />
       </mesh>
+      {[-1, 1].map(side => <mesh key={`tank-port-${side}`} position={[side * (isBuffer ? 1.7 : 1.15), side < 0 ? .65 : -.75, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[.14, .14, .4, 16]} /><meshStandardMaterial color={isBuffer ? "#ee3228" : "#087dff"} metalness={.6} />
+      </mesh>)}
+      {[-1, 1].map(y => <mesh key={`dome-${y}`} position={[0, y * (isBuffer ? 1.6 : 1.4), 0]} scale={[1, .28, 1]} castShadow>
+        <sphereGeometry args={[isBuffer ? 1.7 : 1.15, 24, 12]} />
+        <meshStandardMaterial color={isBuffer ? "#d94034" : "#087dff"} metalness={.55} roughness={.22} />
+      </mesh>)}
+      {[-1, 1].map(x => <mesh key={`foot-${x}`} position={[x * (isBuffer ? 1.25 : .8), -1.65, 0]}>
+        <boxGeometry args={[.22, .6, .9]} /><meshStandardMaterial color="#37444f" metalness={.7} />
+      </mesh>)}
       {[-1, 1].map((y) => (
         <mesh key={y} position={[0, y * (isBuffer ? 1.25 : 1.05), 0]}>
           <torusGeometry args={[isBuffer ? 1.72 : 1.17, 0.055, 10, 40]} />
@@ -151,11 +165,12 @@ function Tank({ object, step, selected, onSelect }: { object: SceneObject; step?
         <boxGeometry args={[0.85, 0.42, 0.04]} />
         <meshStandardMaterial color="#182229" emissive="#144c68" emissiveIntensity={1.2} />
       </mesh>
-      {selected && (
+      {(selected || object.floor_id === "external") && (
         <EngineeringLabel
-          text={object.id}
-          subtext={isBuffer ? `${step?.buffer_temp_C?.toFixed(1) ?? "—"} °C thermal buffer` : "Closed-loop treatment / verification"}
-          position={[0, 2.15, 0]}
+          className={`tank-label ${isBuffer ? "buffer-tank-label" : "treatment-tank-label"}`}
+          text={isBuffer ? "Thermal Buffer" : "Water Treatment"}
+          subtext={isBuffer ? `${step?.buffer_temp_C?.toFixed(1) ?? "—"} °C thermal buffer` : "Filtered sidestream"}
+          position={[0, -.15, 2.0]}
           accent="#5bc6e8"
         />
       )}

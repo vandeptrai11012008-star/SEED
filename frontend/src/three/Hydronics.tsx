@@ -1,8 +1,9 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { SceneObject, ScenePipe, StepRecord } from "../api/types";
 import type { PipeOverlay } from "../store";
+import { pipePath } from "./pipePath";
 import { tempColor } from "./colors";
 import { worldPosition, worldVector } from "./coordinates";
 import EngineeringLabel from "./Label";
@@ -20,7 +21,7 @@ function FlowParticle({
   phase,
   speed,
 }: {
-  curve: THREE.CatmullRomCurve3;
+  curve: THREE.Curve<THREE.Vector3>;
   phase: number;
   speed: number;
 }) {
@@ -55,12 +56,13 @@ function FlowPipe({
   const curve = useMemo(() => {
     const points = (pipe.points ?? []).map((point) => worldVector(point));
     if (points.length < 2) points.push(new THREE.Vector3());
-    return new THREE.CatmullRomCurve3(points, false, "catmullrom", 0.08);
+    return pipePath(points);
   }, [pipe.points]);
   const geometry = useMemo(
     () => new THREE.TubeGeometry(curve, Math.max(24, (pipe.points?.length ?? 2) * 18), Math.max(0.12, (pipe.diameter_m ?? 0.08) / 2), 10, false),
     [curve, pipe.diameter_m, pipe.points?.length],
   );
+  useEffect(() => () => geometry.dispose(), [geometry]);
   const state = step?.pipe_states?.[pipe.id];
   const flow = state?.mass_flow_kg_s ?? 0;
   const temperature = state?.temperature_C;
@@ -71,6 +73,7 @@ function FlowPipe({
   const visibleFlow = overlay !== "off" && flow > 0.001;
   const speed = 0.025 + Math.min(0.16, flow / 90);
   const midpoint = curve.getPointAt(0.5);
+  const arrowCount = Math.min(18, Math.max(2, Math.ceil(curve.getLength() / 5)));
 
   return (
     <group name={pipe.id}>
@@ -92,7 +95,7 @@ function FlowPipe({
           opacity={pipe.buried ? 0.9 : 1}
         />
       </mesh>
-      {visibleFlow && [0, 0.25, 0.5, 0.75].map((phase) => (
+      {visibleFlow && Array.from({ length: arrowCount }, (_, i) => i / arrowCount).map((phase) => (
         <FlowParticle key={phase} curve={curve} phase={phase} speed={speed} />
       ))}
       {selected && (

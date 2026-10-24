@@ -390,3 +390,52 @@ button:focus-visible { outline: 3px solid #f6be4f; outline-offset: 3px; }
 @media (max-width: 560px) {
   .illustration-mode .engineering-label { transform: translateX(18px); }
 }
+
+/* Full-frame reference composition: the facility is the illustration. */
+.illustration-mode .scene-brand { top: 16px; left: 20px; padding: 9px 12px; border-radius: 6px; background: #142a3dd9; color: #f0f7ff; }
+.illustration-mode .scene-brand h1, .illustration-mode .scene-brand p { display: none; }
+.illustration-mode .scene-brand .eyebrow { font-size: 10px; letter-spacing: .13em; }
+.illustration-mode .flow-guide { top: 16px; right: 18px; width: min(460px, 34vw); padding: 16px 20px; border-radius: 12px; background: #f7fbfff0; }
+.illustration-mode .guide-heading { font-size: 17px; padding-bottom: 8px; }
+.illustration-mode .flow-key { font-size: 12px; }
+.illustration-mode .flow-guide li { font-size: 12px; margin: 9px 0; line-height: 1.4; }
+.illustration-mode .flow-guide ol { margin-top: 8px; padding-top: 5px; }
+.illustration-mode > .view-toggle { top: auto; right: 18px; bottom: 20px; }
+.illustration-mode .scene-footnote { top: 58px; bottom: auto; left: 22px; color: #f6fbff; font-size: 9px; }
+.illustration-mode .overlay-controls { bottom: 18px; left: 20px; }
+.illustration-mode .scene-toolbar { bottom: 16px; }
+.illustration-mode .engineering-label { min-width: 156px; padding: 9px 11px; border-radius: 5px; background: #132638f0; }
+.illustration-mode .engineering-label strong { font-size: 11px; }
+.illustration-mode .engineering-label span { font-size: 9px; }
+.illustration-mode.tools-open > .right { top: 65px; bottom: 80px; }
+@media (max-width: 1100px) {
+  .illustration-mode .flow-guide { width: 330px; padding: 12px 15px; }
+  .illustration-mode .flow-guide li { font-size: 10px; margin: 7px 0; }
+  .illustration-mode .scene-toolbar { left: 52%; }
+  .illustration-mode .scene-toolbar button { padding: 9px 10px; }
+  .illustration-mode .overlay-controls { width: 240px; }
+  .illustration-mode .engineering-label { min-width: 120px; padding: 6px 8px; }
+  .illustration-mode .engineering-label strong { font-size: 9px; }
+}
+@media (max-width: 700px) {
+  .illustration-mode .flow-guide { top: 92px; right: 12px; width: 245px; max-height: 35vh; overflow-y: auto; }
+  .illustration-mode .flow-guide.collapsed { top: 92px; padding-bottom: 5px; }
+  .illustration-mode .guide-heading { font-size: 13px; }
+  .illustration-mode .scene-toolbar { bottom: 68px; left: 50%; width: calc(100% - 24px); }
+  .illustration-mode .overlay-controls { bottom: 120px; width: 225px; left: 12px; }
+  .illustration-mode > .view-toggle { bottom: 16px; right: 12px; }
+  .illustration-mode .engineering-label { min-width: 96px; padding: 4px 6px; }
+  .illustration-mode .engineering-label strong { font-size: 8px; }
+  .illustration-mode .scene-footnote { top: 57px; font-size: 8px; }
+}
+.illustration-mode .engineering-label.tank-label { min-width: 0; width: 114px; padding: 8px 5px; color: #132638; text-align: center; background: #f7faf4ef; border: 1px solid #ffffffb0; }
+.illustration-mode .engineering-label.tank-label span { color: #3a5362; font-size: 8px; white-space: normal; }
+@media (max-width: 700px) {
+  .illustration-mode .engineering-label.tank-label { width: 82px; padding: 5px 3px; }
+  .illustration-mode .engineering-label.tank-label strong { font-size: 7px; }
+}
+
+@media (max-width: 700px) {
+  .illustration-mode .engineering-label.buffer-tank-label { transform: translate(18px, -22px); }
+  .illustration-mode .engineering-label.treatment-tank-label { transform: translate(18px, 10px); }
+}

@@ -43,12 +43,12 @@ SEED/
 
 ## Interactive 3D facility
 
-The default auto-fit view frames the complete 74 m-wide site. The procedural
+The default illustrated cutaway frames the complete site with an exaggerated vertical scale for legibility. Simulation view retains the 1:1 SI geometry. The procedural
 R3F model includes structural slabs/columns/beams, a transparent curtain wall,
 all six cutaway floors, detailed GPU racks and cooling manifolds, robot cells,
 seed racks and growth chambers, B2 plate HX/pumps/valves/two tanks, an arched
 glass greenhouse with plants and soil beds, and the underground utility tunnel.
-All 33 rendered pipe segments come from `config/network.json`; animated particles
+All 40 rendered pipe segments come from `config/network.json`; animated particles
 follow their real `from -> to` paths and read temperature/mass flow by stable ID.
 
 Camera controls include auto-fit, isometric, front cutaway, WASD walkthrough,
@@ -123,6 +123,14 @@ Render instance does not preserve these across redeploys/restarts; use a
 database or persistent storage if long-term result retention becomes necessary.
 
 ## Validation
+
+Run `python -m pytest -q tests` from the repository root for piping regression tests.
+They check shared-node continuity, orthogonal routing, separate heat-exchanger and tank
+ports, GPU manifold connections, and zero flow in inactive cooler/storage branches.
+Pipes use straight runs with bounded elbows; the supply and return risers sit together
+on the building's right edge. The external buffer and treatment tanks remain branches
+of the secondary circuit, hydraulically isolated from the GPU loop at the B2 exchanger.
+
 
 The GitHub Actions workflow `.github/workflows/verify.yml` checks the
 TypeScript production build, FastAPI health/config/scene endpoints, and
