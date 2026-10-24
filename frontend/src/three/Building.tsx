@@ -7,6 +7,7 @@ import Greenhouse from "./Greenhouse";
 import Hydronics from "./Hydronics";
 import InteriorEquipment from "./InteriorEquipment";
 import ServerHalls from "./ServerHall";
+import { LandscapeTrees } from "./Vegetation";
 
 // Entirely procedural facility. No GLB / Blender / external assets: every mesh
 // below is generated at runtime with Three.js geometry.
@@ -126,14 +127,7 @@ function ReferenceLandscape() {
     <mesh position={[40, -4.4, -9]} receiveShadow><boxGeometry args={[44, 8.7, 3]} /><meshStandardMaterial map={earth} color="#ddd1b9" roughness={1} /></mesh>
     <mesh position={[40, -0.15, -9]} receiveShadow><boxGeometry args={[44, 0.45, 3.2]} /><meshStandardMaterial color="#658449" roughness={1} /></mesh>
     <mesh position={[18, -0.18, -21]} receiveShadow><boxGeometry args={[112, 0.4, 18]} /><meshStandardMaterial color="#6d8e51" roughness={1} /></mesh>
-    {Array.from({ length: 22 }, (_, i) => {
-      const x = -34 + i * 5.2;
-      const h = 3.5 + (i % 4) * 1.1;
-      return <group key={i} position={[x, 0, -24 - (i % 3) * 2]}>
-        <mesh position={[0, h / 2, 0]}><cylinderGeometry args={[0.12, 0.25, h, 7]} /><meshStandardMaterial color="#66513c" /></mesh>
-        {[0, 1, 2].map(j => <mesh key={j} position={[(j - 1) * 0.8, h + j * 0.65, (j % 2) * 0.6]} castShadow><icosahedronGeometry args={[1.7 + (i % 3) * .25, 1]} /><meshStandardMaterial color={['#557849', '#729752', '#3e6949'][(i + j) % 3]} roughness={.95} /></mesh>)}
-      </group>;
-    })}
+    <LandscapeTrees />
   </group>;
 }
 

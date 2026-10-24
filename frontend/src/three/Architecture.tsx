@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { Line } from "@react-three/drei";
 import type { AppConfig } from "../api/types";
 import type { FloorId } from "../store";
+import { useSurfaceTexture } from "./surfaceTextures";
 import EngineeringLabel from "./Label";
 
 const FLOOR_COLORS: Record<FloorId, string> = {
@@ -39,6 +40,7 @@ export default function Architecture({
   cutaway: boolean;
   undergroundView: boolean;
 }) {
+  const concrete = useSurfaceTexture("concrete");
   const geometry = config.geometry;
   const building = geometry.main_building;
   const floors = geometry.floors as Array<{
@@ -63,6 +65,9 @@ export default function Architecture({
               <boxGeometry args={[building.width_x, 0.28, building.depth_y]} />
               <meshStandardMaterial
                 color={FLOOR_COLORS[floor.id]}
+                map={concrete}
+                bumpMap={concrete}
+                bumpScale={.025}
                 roughness={0.82}
                 metalness={0.05}
               />
@@ -91,7 +96,7 @@ export default function Architecture({
             {cutaway && <>
               <mesh position={[0, z0 + height / 2, -10.65]} receiveShadow>
                 <boxGeometry args={[35.4, height - .3, .12]} />
-                <meshStandardMaterial color={isGpu ? "#364452" : "#8b8272"} roughness={.72} />
+                <meshStandardMaterial color={isGpu ? "#46535c" : "#b4ad9c"} map={concrete} bumpMap={concrete} bumpScale={.02} roughness={.72} />
               </mesh>
               {[-12, -4, 4, 12].map(x => <mesh key={`ceiling-light-${x}`} position={[x, z1 - .36, 0]}>
                 <boxGeometry args={[5, .06, .12]} />
@@ -143,9 +148,9 @@ export default function Architecture({
             )}
 
             <pointLight
-              position={[0, z0 + height - 0.45, 0]}
-              intensity={isBasement ? 34 : 24}
-              distance={28}
+              position={[0, z0 + height - 0.45, 9]}
+              intensity={isGpu ? 70 : 55}
+              distance={35}
               color={isGpu ? "#cce7ff" : "#ffe7c7"}
             />
             {cutaway && (

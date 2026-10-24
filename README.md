@@ -69,6 +69,13 @@ pre-generated GLB assets in the application run path. The optional
 `blender/` scripts remain in the repo for offline authoring only and are not
 required to build, run, or view the digital twin.
 
+GPU rack faces use a local detailed panel texture with load-linked status rails.
+Crops have curved leaves, growing supports and fruit; crop and tree geometry is
+instanced to keep draw calls low. Floor and soil textures are generated locally.
+The illustrated view arranges the same rack IDs for readability; Simulation view
+retains the engineering coordinates. These visual details do not change simulated
+rack counts, hydraulic routing or physics inputs.
+
 ## Requirements
 
 - **Windows 11** (instructions below; works on macOS/Linux too)
