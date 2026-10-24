@@ -90,6 +90,16 @@ export default function Architecture({
               }),
             )}
 
+            {cutaway && <>
+              <mesh position={[0, z0 + height / 2, -10.65]} receiveShadow>
+                <boxGeometry args={[35.4, height - .3, .12]} />
+                <meshStandardMaterial color={isGpu ? "#364452" : "#8b8272"} roughness={.72} />
+              </mesh>
+              {[-12, -4, 4, 12].map(x => <mesh key={`ceiling-light-${x}`} position={[x, z1 - .36, 0]}>
+                <boxGeometry args={[5, .06, .12]} />
+                <meshStandardMaterial color="#fff3d8" emissive="#fff0cc" emissiveIntensity={2} toneMapped={false} />
+              </mesh>)}
+            </>}
             {/* Central service walkway / equipment aisle. */}
             <mesh position={[0, z0 + 0.31, 0]} receiveShadow>
               <boxGeometry args={[32, 0.06, isGpu ? 2.2 : 1.5]} />
@@ -97,7 +107,7 @@ export default function Architecture({
             </mesh>
 
             {/* Fire-rated equipment/zone partitions with a central access opening. */}
-            {(floor.id === "b1" || floor.id === "b2") && [-6.5, 6.5].map((z) => (
+            {!cutaway && (floor.id === "b1" || floor.id === "b2") && [-6.5, 6.5].map((z) => (
               <mesh key={`partition-${z}`} position={[0, z0 + height / 2, z]} castShadow>
                 <boxGeometry args={[0.16, height - 0.35, 8.5]} />
                 <meshStandardMaterial color={floor.id === "b2" ? "#6f7b82" : "#879087"} roughness={0.72} metalness={0.18} />
@@ -142,9 +152,9 @@ export default function Architecture({
             />
             {cutaway && (
               <EngineeringLabel
-                text={floor.name}
-                subtext={`${z0.toFixed(1)} to ${z1.toFixed(1)} m`}
-                position={[-19.2, z0 + height / 2, 10.8]}
+                text={({ f3: "3F · AI DATA CENTER", f2: "2F · AI DATA CENTER", f1: "1F · AI DATA CENTER", gf: "GF · ROBOT LAB", b1: "B1 · SEED RESEARCH", b2: "B2 · HEAT EXCHANGER" })[floor.id]}
+                subtext={isGpu ? "GPU servers / Liquid cooling" : floor.id === "b2" ? "Underground mechanical plant" : "Recovered heat / Research zone"}
+                position={[-16, z0 + height - 0.9, 11.5]}
                 accent={isGpu ? "#45a8ff" : isBasement ? "#d4a96a" : "#9dd7ff"}
               />
             )}
@@ -191,7 +201,7 @@ export default function Architecture({
       )}
 
       {/* Ground datum and excavation edge — ground is exactly world Z=0. */}
-      {!undergroundView && (
+      {!undergroundView && !cutaway && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[19, -0.04, 0]} receiveShadow>
           <planeGeometry args={[120, 70]} />
           <meshStandardMaterial color="#273229" roughness={0.96} />

@@ -139,7 +139,7 @@ function Tank({ object, step, selected, onSelect }: { object: SceneObject; step?
     <group position={worldPosition(object.center!)} onClick={(e) => { e.stopPropagation(); onSelect(object.id); }}>
       <mesh castShadow>
         <cylinderGeometry args={[isBuffer ? 1.7 : 1.15, isBuffer ? 1.7 : 1.15, isBuffer ? 3.2 : 2.8, 40]} />
-        <meshStandardMaterial color={isBuffer ? "#448fae" : "#7a929f"} metalness={0.78} roughness={0.28} />
+        <meshStandardMaterial color={isBuffer ? "#d94034" : "#087dff"} metalness={0.45} roughness={0.24} />
       </mesh>
       {[-1, 1].map((y) => (
         <mesh key={y} position={[0, y * (isBuffer ? 1.25 : 1.05), 0]}>

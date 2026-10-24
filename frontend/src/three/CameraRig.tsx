@@ -7,6 +7,7 @@ import { useStore } from "../store";
 type ControlsLike = { target: THREE.Vector3; update: () => void; enabled: boolean };
 
 export default function CameraRig({ config }: { config: AppConfig }) {
+  const size = useThree((state) => state.size);
   const camera = useThree((state) => state.camera as THREE.PerspectiveCamera);
   const controls = useThree((state) => state.controls as unknown as ControlsLike | undefined);
   const preset = useStore((state) => state.cameraPreset);
@@ -36,7 +37,9 @@ export default function CameraRig({ config }: { config: AppConfig }) {
       return { position: new THREE.Vector3(77, 43, 67), target: new THREE.Vector3(17, 4, 0) };
     }
     if (preset === "front_cutaway") {
-      return { position: new THREE.Vector3(12, 7, 70), target: new THREE.Vector3(7, 5, 0) };
+      const aspect = size.width / Math.max(size.height, 1);
+      const distance = Math.max(38 / (2 * Math.tan(fovRadians / 2)), 92 / (2 * Math.tan(fovRadians / 2) * aspect));
+      return { position: new THREE.Vector3(19, 8, distance), target: new THREE.Vector3(19, 5, 0) };
     }
     if (preset === "walkthrough") {
       return { position: new THREE.Vector3(15, 1.7, -7.5), target: new THREE.Vector3(0, 1.5, 3) };
@@ -52,7 +55,7 @@ export default function CameraRig({ config }: { config: AppConfig }) {
     );
     const elevation = floor ? (floor.z[0] + floor.z[1]) / 2 : 6.75;
     return { position: new THREE.Vector3(34, elevation + 3.8, 34), target: new THREE.Vector3(0, elevation, 0) };
-  }, [camera.fov, config, inspectedFloor, preset, requestId]);
+  }, [camera.fov, config, inspectedFloor, preset, requestId, size.width, size.height]);
 
   useEffect(() => {
     transitioning.current = true;

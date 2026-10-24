@@ -26,6 +26,8 @@ interface AppState {
   loading: boolean;
   error?: string;
 
+  illustration: boolean;
+  setIllustration: (value: boolean) => void;
   cutaway: boolean;
   visibleFloors: Record<FloorId, boolean>;
   pipeOverlay: PipeOverlay;
@@ -207,12 +209,20 @@ export const SLIDES: Slide[] = [
 const floorIds: FloorId[] = ["b2", "b1", "gf", "f1", "f2", "f3"];
 
 export const useStore = create<AppState>((set, get) => ({
+  illustration: true,
+  setIllustration: (illustration) => {
+    set({ illustration });
+    if (illustration) {
+      set({ presenting: false, autoAdvance: false, pipeOverlay: "flow" });
+      get().setCameraPreset("front_cutaway");
+    }
+  },
   loading: false,
   cutaway: true,
   visibleFloors: Object.fromEntries(floorIds.map((floor) => [floor, true])) as Record<FloorId, boolean>,
-  pipeOverlay: "temperature",
+  pipeOverlay: "flow",
   showGreenhouseSoil: true,
-  cameraPreset: "auto_fit",
+  cameraPreset: "front_cutaway",
   cameraRequestId: 0,
   inspectedFloor: "f1",
   stepIndex: 0,
