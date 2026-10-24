@@ -1,28 +1,11 @@
-# Render.com blueprint — single service hosting BOTH the FastAPI backend and the
-# built React/Three.js frontend. One URL, one deploy.
-#
-# How to deploy:
-#   1. Push this repo to GitHub (or upload the source ZIP to a new GitHub repo).
-#   2. render.com -> New + -> Blueprint -> select the repo. Render reads this file.
-#   3. Click Apply. The build installs Node + Python deps, builds the frontend,
-#      then starts FastAPI which serves the frontend at "/" and the API at "/api".
-#   4. Open the service URL -> the full 3D digital twin with working simulation.
+# Render Blueprint: one Docker web service for FastAPI + built React UI.
+# Render -> New -> Blueprint -> choose this GitHub repository.
 services:
   - type: web
     name: thermalloop
-    runtime: python
+    runtime: docker
     plan: free
-    # Build from the repo root so the frontend can be built and the backend can
-    # serve frontend/dist.
-    buildCommand: >
-      npm --prefix frontend install &&
-      npm --prefix frontend run build &&
-      pip install -r backend/requirements.txt
-    startCommand: python backend/serve.py
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /api/health
     autoDeploy: true
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.12.7"
-      - key: NODE_VERSION
-        value: "20.11.1"
