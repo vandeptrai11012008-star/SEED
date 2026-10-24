@@ -68,37 +68,37 @@ export default function App() {
       <button className="view-toggle" onClick={() => {
         useStore.getState().setIllustration(!illustration);
         setToolsOpen(false);
-      }}>{illustration ? "Mở bảng mô phỏng ↗" : "← Chế độ minh họa"}</button>
+      }}>{illustration ? "Open simulation ↗" : "← Illustration view"}</button>
       <LeftPanel />
 
       <div className="canvas-wrap">
         <Viewer />
         {illustration && <>
-          <div className="scene-brand"><span className="eyebrow">THERMALLOOP / DIGITAL TWIN</span><h1>Từ sức mạnh AI.<br />Đến mầm xanh.</h1><p>Thu hồi nhiệt · Nuôi dưỡng tương lai</p></div>
-          <aside className={`flow-guide ${legendOpen ? "" : "collapsed"}`} aria-label="Chú giải dòng nhiệt">
-            <button className="guide-heading" onClick={() => setLegendOpen(!legendOpen)} aria-expanded={legendOpen}>Vòng tuần hoàn nhiệt <span>{legendOpen ? "−" : "+"}</span></button>
+          <div className="scene-brand"><span className="eyebrow">THERMALLOOP / DIGITAL TWIN</span><h1>Powered by AI.<br />Growing a greener future.</h1><p>Recovering heat · Cultivating the future</p></div>
+          <aside className={`flow-guide ${legendOpen ? "" : "collapsed"}`} aria-label="Heat flow legend">
+            <button className="guide-heading" onClick={() => setLegendOpen(!legendOpen)} aria-expanded={legendOpen}>The heat recovery loop <span>{legendOpen ? "−" : "+"}</span></button>
             {legendOpen && <>
-              <div className="flow-key"><i className="cold" />Nước mát / hồi về</div>
-              <div className="flow-key"><i className="hot" />Nước nóng / cấp nhiệt</div>
+              <div className="flow-key"><i className="cold" />Cool water / Return</div>
+              <div className="flow-key"><i className="hot" />Hot water / Supply</div>
               <ol>{[
-                "Nước mát được bơm lên ba tầng GPU.",
-                "Máy chủ truyền nhiệt vào mạch làm mát.",
-                "Nhiệt thu hồi sưởi phòng robot và khu thử hạt.",
-                "Bộ trao đổi nhiệt B2 nối hai mạch độc lập.",
-                "Ống cách nhiệt đưa nước nóng đến nhà kính.",
-                "Nước truyền nhiệt cho đất rồi hồi về.",
-                "Bồn đệm và nhánh xử lý ổn định mạch thứ cấp.",
+                "Cool water is pumped up to all three GPU floors.",
+                "Servers transfer waste heat into the cooling circuit.",
+                "Recovered heat warms the robot lab and seed testing zones.",
+                "The B2 heat exchanger transfers heat between two isolated circuits.",
+                "Insulated pipes carry hot water to the greenhouse.",
+                "Water heats the soil, then returns to the plant.",
+                "A buffer tank and treatment sidestream stabilize the secondary circuit.",
               ].map((text, i) => <li key={text}><b className={i === 0 || i > 4 ? "cold" : "hot"}>{i + 1}</b><span>{text}</span></li>)}</ol>
-              <p className="circuit-note">Hai mạch nước tách biệt. Chỉ trao đổi nhiệt tại B2.</p>
+              <p className="circuit-note">Two isolated water circuits. Heat transfers only at the B2 heat exchanger.</p>
             </>}
           </aside>
-          <nav className="scene-toolbar" aria-label="Điều khiển góc nhìn">
-            <button onClick={() => useStore.getState().setCameraPreset("front_cutaway")}>↺ Toàn cảnh</button>
-            <button onClick={() => useStore.getState().setCameraPreset("greenhouse")}>Nhà kính</button>
-            <button onClick={() => useStore.getState().setCameraPreset("underground")}>Tầng B2</button>
-            <button aria-pressed={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}>{toolsOpen ? "Đóng thông số" : "Thông số"}</button>
+          <nav className="scene-toolbar" aria-label="View controls">
+            <button onClick={() => useStore.getState().setCameraPreset("front_cutaway")}>↺ Overview</button>
+            <button onClick={() => useStore.getState().setCameraPreset("greenhouse")}>Greenhouse</button>
+            <button onClick={() => useStore.getState().setCameraPreset("underground")}>B2 plant</button>
+            <button aria-pressed={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}>{toolsOpen ? "Close details" : "Details"}</button>
           </nav>
-          <div className="scene-footnote"><span className="status-dot" />{loading ? "Đang tính mô phỏng…" : "Mô phỏng vật lý giản lược"}<span>Kéo để xoay · Cuộn để phóng to</span></div>
+          <div className="scene-footnote"><span className="status-dot" />{loading ? "Running simulation…" : "Simplified physics simulation"}<span>Drag to orbit · Scroll to zoom</span></div>
         </>}
         {loading && <div className="loading">Loading…</div>}
         {error && <div className="error">Backend error: {error}</div>}
