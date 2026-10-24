@@ -1,0 +1,36 @@
+{
+  "$schema": "./schema/units.schema.json",
+  "description": "Canonical internal units. All engineering data is stored in SI internally. UI may convert for display only.",
+  "system": "SI",
+  "quantities": {
+    "length": "m",
+    "area": "m2",
+    "volume": "m3",
+    "mass": "kg",
+    "time": "s",
+    "temperature": "K",
+    "temperature_display": "degC",
+    "mass_flow_rate": "kg/s",
+    "volumetric_flow_rate": "m3/s",
+    "power": "W",
+    "energy": "J",
+    "pressure": "Pa",
+    "specific_heat": "J/(kg.K)",
+    "density": "kg/m3",
+    "thermal_conductivity": "W/(m.K)",
+    "heat_transfer_coefficient": "W/(m2.K)",
+    "efficiency": "fraction_0_1",
+    "velocity": "m/s"
+  },
+  "world_scale": {
+    "one_world_unit_equals": 1.0,
+    "unit": "m",
+    "axes": { "x": "east", "y": "north", "z": "up" },
+    "ground_level_z": 0.0
+  },
+  "constants": {
+    "water_cp": 4186.0,
+    "water_density": 997.0,
+    "gravity": 9.80665
+  }
+}

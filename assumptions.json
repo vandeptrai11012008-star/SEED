@@ -1,0 +1,85 @@
+{
+  "$schema": "./schema/assumptions.schema.json",
+  "description": "Authoritative engineering design assumptions. All values configurable.",
+  "power": {
+    "total_it_power_kW": 1500.0,
+    "per_gpu_floor_kW": 500.0,
+    "gpu_floor_ids": ["f1", "f2", "f3"],
+    "liquid_capture_fraction": 0.8,
+    "notes": "At full load: captured liquid-loop heat = 1200 kW, remaining air/other IT heat = 300 kW."
+  },
+  "primary_circuit": {
+    "supply_temp_C": 30.0,
+    "return_temp_C": 45.0,
+    "design_return_temp_C": 45.0,
+    "design_delta_T_K": 15.0,
+    "loop_volume_m3": 8.0,
+    "glycol_fraction": 0.0,
+    "cp_J_per_kgK": 4186.0,
+    "density_kg_per_m3": 997.0,
+    "max_rack_inlet_temp_C": 40.0,
+    "notes": "Variable-speed warm-water direct-to-chip loop. Flow is capped by pump rating; return temperature is calculated from captured heat and actual flow."
+  },
+  "secondary_circuit": {
+    "supply_temp_C": 55.0,
+    "return_temp_C": 40.0,
+    "target_supply_temp_C": 55.0,
+    "design_return_temp_C": 40.0,
+    "design_delta_T_K": 15.0,
+    "cp_J_per_kgK": 4186.0,
+    "density_kg_per_m3": 997.0,
+    "notes": "HX outlet temperature is calculated. The heat pump may lift it toward 55 C; mixing valves protect lower-temperature branches."
+  },
+  "heat_exchanger": {
+    "effectiveness": 0.85,
+    "ua_W_per_K": 90000.0,
+    "model": "effectiveness_NTU_simplified"
+  },
+  "heat_pump": {
+    "enabled": true,
+    "cop_heating": 4.0,
+    "max_thermal_output_kW": 400.0,
+    "role": "series_temperature_booster_using_residual_primary_heat_as_source",
+    "notes": "Condenser heat equals evaporator source heat plus compressor electricity. Source extraction is deducted from the primary-loop balance."
+  },
+  "auxiliary_rejection": {
+    "dry_cooler_capacity_kW": 1500.0,
+    "note": "Capacity-limited dry cooler rejects primary heat not recovered by the HX/heat pump and removes stored loop heat above the supply setpoint."
+  },
+  "distribution_losses": {
+    "primary_indoor_pipe_loss_fraction": 0.01,
+    "secondary_indoor_pipe_loss_fraction": 0.03,
+    "indoor_pipe_loss_fraction": 0.03,
+    "buried_pipe_U_W_per_mK": 0.35,
+    "buried_pipe_length_m": 60.0,
+    "note": "Primary/secondary indoor losses are explicit fractions; buried insulated pipe loss uses Q=U' L DeltaT to deep soil."
+  },
+  "thermal_buffer": {
+    "tank_id": "tank_buffer_001",
+    "volume_m3": 50.0,
+    "initial_temp_C": 45.0,
+    "min_temp_C": 35.0,
+    "min_useful_temp_C": 35.0,
+    "max_temp_C": 70.0,
+    "max_charge_kW": 600.0,
+    "max_discharge_kW": 600.0,
+    "heat_loss_W_per_K": 25.0
+  },
+  "greenhouse_soil": {
+    "u_cover_W_per_m2K": 6.0,
+    "u_ground_W_per_m2K": 1.5,
+    "thermal_mass_J_per_K": 40000000.0,
+    "recovery_time_constant_s": 21600.0
+  },
+  "zones": {
+    "zone_robot_lab": { "design_heat_demand_kW": 120.0, "setpoint_C": 22.0, "min_supply_C": 35.0, "thermal_capacitance_J_per_K": 300000000.0 },
+    "zone_seed_storage": { "design_heat_demand_kW": 40.0, "setpoint_C": 15.0, "min_supply_C": 30.0, "thermal_capacitance_J_per_K": 100000000.0 },
+    "zone_seed_testing": { "design_heat_demand_kW": 60.0, "setpoint_C": 24.0, "min_supply_C": 35.0, "thermal_capacitance_J_per_K": 120000000.0 },
+    "zone_greenhouse_soil": { "design_heat_demand_kW": 300.0, "setpoint_C": 20.0, "min_supply_C": 30.0, "soil_target_C": 22.0, "thermal_capacitance_J_per_K": 40000000.0 }
+  },
+  "pumps": {
+    "primary": { "rated_flow_m3_s": 0.02, "rated_head_Pa": 180000.0, "equipment_allowance_Pa": 50000.0, "efficiency": 0.7 },
+    "secondary": { "rated_flow_m3_s": 0.018, "rated_head_Pa": 150000.0, "equipment_allowance_Pa": 40000.0, "efficiency": 0.7 },
+    "greenhouse": { "rated_flow_m3_s": 0.01, "rated_head_Pa": 120000.0, "equipment_allowance_Pa": 25000.0, "efficiency": 0.65 }
+  }
+}

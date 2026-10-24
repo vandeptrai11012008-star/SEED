@@ -1,0 +1,13 @@
+{
+  "description": "Sample POST /api/simulate body. Winter peak day, heat pump on.",
+  "mode": "simplified_physics",
+  "scenario_id": "winter_peak",
+  "duration_s": 86400,
+  "timestep_s": 600,
+  "total_it_power_kW": 1500,
+  "liquid_capture_fraction": 0.8,
+  "gpu_load_base_fraction": 0.6,
+  "gpu_load_peak_fraction": 0.95,
+  "heat_pump_enabled": true,
+  "aux_rejection_enabled": true
+}

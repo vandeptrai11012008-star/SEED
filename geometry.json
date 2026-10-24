@@ -1,0 +1,52 @@
+{
+  "$schema": "./schema/geometry.schema.json",
+  "units": "m",
+  "world": {
+    "axes": { "x": "east", "y": "north", "z": "up" },
+    "ground_level_z": 0.0
+  },
+  "main_building": {
+    "id": "main_building",
+    "origin": [0.0, 0.0, 0.0],
+    "width_x": 36.0,
+    "depth_y": 22.0,
+    "height_z": 18.0,
+    "footprint": { "x": [-18.0, 18.0], "y": [-11.0, 11.0] }
+  },
+  "floors": [
+    { "id": "b2", "name": "B2 Mechanical Plant", "z": [-8.5, -4.0], "use": "mechanical_plant_heat_exchanger" },
+    { "id": "b1", "name": "B1 Seed Storage & Testing", "z": [-4.0, 0.0], "use": "seed_storage_testing" },
+    { "id": "gf", "name": "GF Robot Laboratory", "z": [0.0, 4.5], "use": "robot_laboratory" },
+    { "id": "f1", "name": "1F GPU Data Center", "z": [4.5, 9.0], "use": "gpu_data_center" },
+    { "id": "f2", "name": "2F GPU Data Center", "z": [9.0, 13.5], "use": "gpu_data_center" },
+    { "id": "f3", "name": "3F GPU Data Center", "z": [13.5, 18.0], "use": "gpu_data_center" }
+  ],
+  "greenhouse": {
+    "id": "greenhouse",
+    "center": [41.0, 0.0, 0.0],
+    "width_x": 30.0,
+    "depth_y": 18.0,
+    "max_height_z": 5.0,
+    "footprint": { "x": [26.0, 56.0], "y": [-9.0, 9.0] },
+    "roof": "arched"
+  },
+  "separation": {
+    "between": ["main_building", "greenhouse"],
+    "gap_x_m": 8.0,
+    "note": "Main building east wall at x=18, greenhouse west wall at x=26 => 8 m gap."
+  },
+  "utility_corridor": {
+    "id": "corridor_underground",
+    "description": "Underground insulated utility corridor carrying buried supply/return pipes between B2 plant and greenhouse.",
+    "z": [-3.0, -1.5],
+    "path": [[18.0, 0.0, -2.25], [26.0, 0.0, -2.25]],
+    "width_y": 2.5
+  },
+  "gpu_floor_layout": {
+    "rows": 2,
+    "racks_per_row": 6,
+    "rack_size": { "width_x": 0.8, "depth_y": 1.2, "height_z": 2.2 },
+    "aisle": { "cold_aisle_y": -3.0, "hot_aisle_y": 3.0 },
+    "note": "12 racks per GPU floor, 2 rows. Rack ids follow gpu_<floor>_rack_NNN."
+  }
+}

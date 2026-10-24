@@ -1,0 +1,33 @@
+{
+  "$schema": "./schema/simulation.schema.json",
+  "description": "Default simulation configuration. POST /api/simulate may override any field.",
+  "mode": "simplified_physics",
+  "available_modes": ["simplified_physics", "openmodelica", "energyplus", "coupled"],
+  "time": {
+    "duration_s": 86400,
+    "timestep_s": 600,
+    "start_hour": 0
+  },
+  "drivers": {
+    "gpu_load_profile": "diurnal",
+    "gpu_load_base_fraction": 0.55,
+    "gpu_load_peak_fraction": 0.95,
+    "weather_profile": "sinusoidal_daily"
+  },
+  "controls": {
+    "primary_supply_setpoint_C": 30.0,
+    "secondary_supply_setpoint_C": 55.0,
+    "heat_pump_enabled": true,
+    "aux_rejection_enabled": true,
+    "buffer_charge_priority": ["zone_robot_lab", "zone_seed_testing", "zone_greenhouse_soil", "zone_seed_storage"]
+  },
+  "scenarios": [
+    { "id": "baseline", "label": "Baseline diurnal", "overrides": {} },
+    { "id": "winter_peak", "label": "Winter peak heat demand",
+      "overrides": { "weather.ambient_mean_C": -2.0, "gpu_load_base_fraction": 0.7 } },
+    { "id": "summer_reject", "label": "Summer surplus rejection",
+      "overrides": { "weather.ambient_mean_C": 26.0, "gpu_load_peak_fraction": 1.0 } },
+    { "id": "no_heatpump", "label": "Heat pump disabled",
+      "overrides": { "controls.heat_pump_enabled": false } }
+  ]
+}

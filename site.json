@@ -1,0 +1,22 @@
+{
+  "$schema": "./schema/site.schema.json",
+  "site_id": "thermalloop_ai_center",
+  "name": "ThermalLoop AI Center",
+  "description": "Physics-based digital twin of an AI data center with server waste-heat recovery to labs, seed facility, and greenhouse.",
+  "location": {
+    "label": "Reference site (configurable)",
+    "latitude_deg": 42.36,
+    "longitude_deg": -71.06,
+    "elevation_m": 10.0,
+    "timezone": "America/New_York"
+  },
+  "weather": {
+    "model": "sinusoidal_daily",
+    "ambient_mean_C": 10.0,
+    "ambient_amplitude_C": 8.0,
+    "soil_deep_temp_C": 9.0,
+    "soil_depth_m": 1.2,
+    "notes": "Simplified weather driver. Replace with EnergyPlus EPW coupling for high fidelity."
+  },
+  "units_ref": "units.json"
+}
