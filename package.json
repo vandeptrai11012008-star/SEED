@@ -1,0 +1,24 @@
+{
+  "name": "neuralroute3d",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "NeuralRoute 3D - interactive neural network AI routing simulator (educational).",
+  "scripts": {
+    "train:demo": "tsx scripts/train-demo.ts",
+    "preview": "tsx scripts/make-preview.ts neuralroute3d-preview.html",
+    "test": "node --import tsx --test src/__tests__/*.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build:app": "node scripts/build-app.mjs"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.25.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
+  }
+}
