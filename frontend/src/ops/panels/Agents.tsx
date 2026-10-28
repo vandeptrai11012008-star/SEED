@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useOps } from "../opsStore";
 
 // Static descriptions matching the actual policy code so the UI explains the
@@ -22,6 +23,8 @@ const AGENT_INFO: Record<string, { goal: string; cycle: string }> = {
 };
 
 export function Agents() {
+  const [query, setQuery] = useState("");
+  const [activeOnly, setActiveOnly] = useState(false);
   const meta = useOps((s) => s.meta);
   const reports = useOps((s) => s.reports);
   const last = reports[reports.length - 1];
@@ -48,8 +51,29 @@ export function Agents() {
 
   if (!meta) return <div className="ops-note">loading…</div>;
 
+  const isRecent = (name: string) => Boolean(bySource[name]?.decisions.length || bySource[name]?.proposals.length);
+  const activeCount = meta.agents.filter((a) => isRecent(a.name)).length;
+  const visibleAgents = meta.agents.filter((a) => {
+    const matches = `${a.name} ${a.owns.join(" ")} ${AGENT_INFO[a.name]?.goal ?? ""}`
+      .toLowerCase().includes(query.trim().toLowerCase());
+    return matches && (!activeOnly || isRecent(a.name));
+  });
+
   return (
     <div className="ops-agents">
+      <div className="ops-agents-toolbar">
+        <div>
+          <span className="ops-eyebrow">AGENT INSPECTOR</span>
+          <h2>8 agents · {activeCount} recently active</h2>
+          <p>Search by agent or actuator, then open its policy details when needed.</p>
+        </div>
+        <div className="ops-agent-filters">
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="Find agent or actuator…" aria-label="Search agents" />
+          <button className={!activeOnly ? "active" : ""} onClick={() => setActiveOnly(false)}>All 8</button>
+          <button className={activeOnly ? "active" : ""} onClick={() => setActiveOnly(true)}>Active ({activeCount})</button>
+        </div>
+      </div>
       {coordPlan && (
         <section className="card coord-banner">
           <h2>Coordinator · {coordPlan.detail?.regime} regime</h2>
@@ -84,18 +108,26 @@ export function Agents() {
           <p className="owns"><em>Supervisory layer — owns no actuator; sets targets the agents track.</em></p>
         </section>
       )}
-      {meta.agents.map((a) => {
+      {visibleAgents.map((a) => {
         const info = AGENT_INFO[a.name];
         const live = bySource[a.name];
+        const recent = isRecent(a.name);
         return (
           <section className="card agent" key={a.name}>
-            <h2>{a.name.replace("_", " ")}</h2>
+            <h2>{a.name.replace("_", " ")}
+              <span className={`agent-status ${recent ? "active" : "idle"}`}>
+                {recent ? "● Recent action" : "○ Waiting"}
+              </span>
+            </h2>
             <p className="goal">{info?.goal}</p>
-            <p className="cycle"><strong>Loop:</strong> {info?.cycle}</p>
             <p className="owns">
               <strong>Owns (single writer):</strong>{" "}
               {a.owns.length ? a.owns.map((o) => <code key={o}>{o}</code>) : <em>none — requests only</em>}
             </p>
+            <details className="agent-policy">
+              <summary>How this agent decides</summary>
+              <p className="cycle">{info?.cycle}</p>
+            </details>
             <div className="agent-live">
               <h3>Latest decisions</h3>
               <ul className="ops-list">
@@ -124,6 +156,9 @@ export function Agents() {
           </section>
         );
       })}
+      {visibleAgents.length === 0 && (
+        <div className="ops-note">No matching agents. Clear the search or show all agents.</div>
+      )}
       {!last && <div className="ops-note">Step the run to see agent activity.</div>}
     </div>
   );

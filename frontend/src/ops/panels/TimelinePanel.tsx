@@ -26,6 +26,8 @@ export function TimelinePanel() {
           </button>
         ))}
       </div>
+      <p className="ops-filter-count">Showing {shown.length} recent {filter === "all" ? "events" : `${filter} events`}. Select a row's data to inspect it.</p>
+      <div className="ops-table-scroll" role="region" aria-label="Operations event timeline" tabIndex={0}>
       <table className="ops-table">
         <thead>
           <tr><th>seq</th><th>t (s)</th><th>type</th><th>source</th><th>topic</th><th>payload</th></tr>
@@ -38,12 +40,18 @@ export function TimelinePanel() {
               <td><span className="pill" style={{ background: TYPE_COLORS[e.type] }}>{e.type}</span></td>
               <td>{e.source}</td>
               <td><code>{e.topic}</code></td>
-              <td><code className="payload">{JSON.stringify(e.payload)}</code></td>
+              <td>
+                <details className="ops-event-payload">
+                  <summary>View data</summary>
+                  <pre>{JSON.stringify(e.payload, null, 2)}</pre>
+                </details>
+              </td>
             </tr>
           ))}
           {shown.length === 0 && <tr><td colSpan={6} className="muted">no events — step the run</td></tr>}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

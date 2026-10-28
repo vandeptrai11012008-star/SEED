@@ -93,6 +93,13 @@ The original 3D illustration and 1:1 simulation remain available at `/`.
   arbiter that clamps unsafe actions.
 - The UI includes agent decisions, event timelines, scenario/fault injection,
   three-mode comparisons and experiment records.
+- The control room groups **Run/Pause**, single-step and ten-step actions,
+  speed, reset and scenario selection. Changing mode/scenario/seed requires
+  **Apply changes** before the next run. A status strip shows simulated time,
+  step count and event count; the dashboard highlights thermal limits.
+- Agent search, expanded event payloads and a **JSON export** help inspect
+  decisions. Exports include only the retained last 400 step reports and last
+  500 events, clearly marked as simplified simulation data.
 - The operations API is under `/api/ops` (`/api/ops/meta`, `/session`,
   `/compare`, etc.). In-memory sessions are not durable; experiment/comparison
   records use a local SQLite file under `results/`.

@@ -3,9 +3,16 @@ import { ops, type BusEvent, type Comparison, type OpsMeta, type StepReport } fr
 
 export type OpsTab = "overview" | "agents" | "timeline" | "lab" | "compare";
 
+interface AppliedConfig {
+  mode: string;
+  scenario: string;
+  seed: number;
+}
+
 interface OpsState {
   meta?: OpsMeta;
   loading: boolean;
+  busy: boolean;
   error?: string;
 
   // session config
@@ -15,12 +22,14 @@ interface OpsState {
   seed: number;
   speed: number;          // steps advanced per tick of the player
   running: boolean;
+  appliedConfig?: AppliedConfig;
 
   // live data
   reports: StepReport[];
   events: BusEvent[];
   latestSeq: number;
   coordinatorCost: number;
+  totalSteps: number;
 
   // comparison
   comparison?: Comparison;
@@ -41,70 +50,103 @@ interface OpsState {
 }
 
 let _timer: number | undefined;
+let _initPromise: Promise<void> | undefined;
 
 export const useOps = create<OpsState>((set, get) => ({
   loading: true,
+  busy: false,
   mode: "C",
   scenario: "ai_load_spike",
   seed: 7,
   speed: 2,
   running: false,
+  appliedConfig: undefined,
   reports: [],
   events: [],
   latestSeq: -1,
   coordinatorCost: 0,
+  totalSteps: 0,
   comparing: false,
   tab: "overview",
 
   setTab: (t) => set({ tab: t }),
 
   init: async () => {
-    try {
-      const meta = await ops.meta();
-      set({ meta, loading: false });
-      await get().startSession();
-    } catch (e: any) {
-      set({ loading: false, error: String(e?.message ?? e) });
+    if (get().meta && get().sessionId) {
+      set({ loading: false });
+      return;
     }
+    // React StrictMode may mount twice; both mounts share one initial request.
+    if (_initPromise) return _initPromise;
+    _initPromise = (async () => {
+      try {
+        const meta = await ops.meta();
+        set({ meta });
+        await get().startSession();
+      } catch (e: any) {
+        set({ error: String(e?.message ?? e) });
+      } finally {
+        set({ loading: false });
+      }
+    })();
+    try { await _initPromise; } finally { _initPromise = undefined; }
   },
 
   configure: (p) => set(p),
 
   startSession: async () => {
+    if (get().busy) return;
     const { mode, scenario, seed } = get();
     get().pause();
-    if (get().sessionId) {
-      try { await ops.deleteSession(get().sessionId!); } catch { /* ignore */ }
+    const previousId = get().sessionId;
+    set({ busy: true, sessionId: undefined, error: undefined });
+    if (previousId) {
+      try { await ops.deleteSession(previousId); } catch { /* best effort */ }
     }
     try {
       const s = await ops.createSession({ mode, scenario, seed, timestep_s: 600 });
-      set({ sessionId: s.session_id, reports: [], events: [], latestSeq: -1, coordinatorCost: 0, error: undefined });
+      set({
+        sessionId: s.session_id, appliedConfig: { mode, scenario, seed },
+        reports: [], events: [], latestSeq: -1, coordinatorCost: 0,
+        totalSteps: 0, error: undefined,
+      });
     } catch (e: any) {
       set({ error: String(e?.message ?? e) });
+    } finally {
+      set({ busy: false });
     }
   },
 
   stepOnce: async (steps) => {
-    const sid = get().sessionId;
-    if (!sid) return;
-    const n = steps ?? get().speed;
+    const { sessionId: sid, appliedConfig, mode, scenario, seed } = get();
+    if (!sid || get().busy) return;
+    if (!appliedConfig || mode !== appliedConfig.mode || scenario !== appliedConfig.scenario || seed !== appliedConfig.seed) return;
+    const n = Math.max(1, Math.min(500, Math.floor(steps ?? get().speed)));
+    set({ busy: true });
     try {
       const res = await ops.tick(sid, n);
       const ev = await ops.events(sid, get().latestSeq);
+      if (get().sessionId !== sid) return;
       set((st) => ({
         reports: [...st.reports, ...res.reports].slice(-400),
         coordinatorCost: res.coordinator_cost_branch_steps,
+        totalSteps: res.total_steps,
         events: [...st.events, ...ev.events].slice(-500),
         latestSeq: ev.latest_seq,
+        error: undefined,
       }));
     } catch (e: any) {
       set({ error: String(e?.message ?? e), running: false });
       get().pause();
+    } finally {
+      if (get().sessionId === sid) set({ busy: false });
     }
   },
 
   play: () => {
-    if (get().running) return;
+    const st = get();
+    if (st.running || st.busy || !st.sessionId || !st.appliedConfig) return;
+    if (st.mode !== st.appliedConfig.mode || st.scenario !== st.appliedConfig.scenario || st.seed !== st.appliedConfig.seed) return;
     // Always clear any stray timer first (guards against StrictMode double
     // mount or a leaked interval) before starting a new one.
     if (_timer) { window.clearInterval(_timer); _timer = undefined; }
@@ -124,6 +166,7 @@ export const useOps = create<OpsState>((set, get) => ({
   },
 
   runCompare: async (nSteps) => {
+    if (get().comparing) return;
     const { scenario, seed } = get();
     set({ comparing: true, error: undefined });
     try {
