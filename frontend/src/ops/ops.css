@@ -1,0 +1,220 @@
+/* ThermaLoop Operations Center — engineering console design system.
+   A small, consistent token set drives the whole UI: one palette, one type
+   scale, one spacing rhythm, status colours by convention (ok/caution/alarm),
+   and monospace tabular figures for every measured value. */
+:root {
+  /* surfaces */
+  --bg: #0a0e14;
+  --panel: #0f1621;
+  --panel-2: #131c29;
+  --line: #1e2a3a;
+  --line-soft: #172230;
+  /* text */
+  --fg: #e4ebf3;
+  --fg-dim: #8493a6;
+  --fg-faint: #5a6878;
+  /* brand + status (convention: cyan=system, green=ok, amber=caution, red=alarm) */
+  --accent: #38cfd9;
+  --ok: #4ad98b;
+  --caution: #e8b23a;
+  --alarm: #ff5d5d;
+  --heat: #ff8c42;
+  --cool: #5aa9ff;
+  --violet: #9d84ff;
+  /* type + space */
+  --mono: "SFMono-Regular", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --sans: -apple-system, "Segoe UI", system-ui, sans-serif;
+  --r: 8px;
+  --sp: 8px;
+}
+
+* { box-sizing: border-box; }
+
+.ops {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, #10202b 0%, transparent 60%),
+    var(--bg);
+  color: var(--fg);
+  font: 14px/1.55 var(--sans);
+  padding: 0 0 56px;
+  letter-spacing: 0.1px;
+}
+
+/* ---- header ---- */
+.ops-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px; background: linear-gradient(180deg, var(--panel), var(--bg));
+  border-bottom: 1px solid var(--line);
+}
+.ops-header h1 {
+  margin: 0; font-size: 17px; font-weight: 650; letter-spacing: 0.3px;
+  display: flex; align-items: center; gap: 10px;
+}
+.ops-header h1::before {
+  content: ""; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ok); box-shadow: 0 0 10px var(--ok);
+}
+.ops-sub { margin: 5px 0 0; color: var(--fg-dim); font-size: 11.5px; }
+.ops-sub strong { color: var(--heat); font-family: var(--mono); }
+.ops-link { color: var(--accent); text-decoration: none; font-size: 12.5px; }
+.ops-link:hover { text-decoration: underline; }
+
+/* ---- session / control bar ---- */
+.ops-session {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+  padding: 12px 24px; background: var(--panel-2);
+  border-bottom: 1px solid var(--line);
+}
+.ops-session label {
+  display: flex; flex-direction: column; font-size: 10px; gap: 4px;
+  color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.6px;
+}
+.ops-session select, .ops-session input {
+  background: #0b121b; color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 9px; font-size: 13px; min-width: 96px;
+  font-family: var(--sans);
+}
+.ops-session input[type=number] { width: 78px; font-family: var(--mono); }
+.ops-session select:focus, .ops-session input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.ops button {
+  background: #16202d; color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 13px; cursor: pointer; font-size: 13px;
+  transition: background 0.12s, border-color 0.12s;
+}
+.ops button:hover { background: #1d2a3a; border-color: #2d4055; }
+.ops button.primary { background: #15696f; border-color: var(--accent); color: #eafcff; }
+.ops button.primary:hover { background: #1a7d84; }
+.ops button.primary:disabled { opacity: 0.45; cursor: default; }
+.ops-stat {
+  color: var(--fg-dim); font-size: 11px; align-self: center;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.ops-stat strong { color: var(--fg); font-family: var(--mono); font-size: 12px; }
+
+/* ---- tabs ---- */
+.ops-tabs { display: flex; gap: 2px; padding: 14px 24px 0; flex-wrap: wrap; }
+.ops-tabs button {
+  border-radius: 7px 7px 0 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--fg-dim); font-size: 12.5px;
+}
+.ops-tabs button:hover { background: var(--panel); }
+.ops-tabs button.active {
+  background: var(--panel); border-color: var(--accent); color: #fff;
+}
+
+.ops-main { padding: 20px 24px; }
+.ops-note { padding: 28px 24px; color: var(--fg-dim); font-size: 13px; }
+.ops-error {
+  margin: 12px 24px; padding: 10px 14px; background: #2a1414;
+  border: 1px solid #5c2a2a; border-left: 3px solid var(--alarm);
+  border-radius: 6px; color: #ffb3b3; font-family: var(--mono); font-size: 12px;
+}
+.ops-footer {
+  padding: 16px 24px; color: var(--fg-faint); font-size: 11px;
+  border-top: 1px solid var(--line); margin-top: 28px; line-height: 1.6;
+}
+
+/* ---- cards / grid ---- */
+.ops-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 16px 18px; position: relative;
+}
+.card h2 {
+  margin: 0 0 14px; font-size: 11px; color: var(--accent); font-weight: 650;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line-soft);
+}
+.card h3 {
+  margin: 14px 0 6px; font-size: 10.5px; color: var(--fg-dim);
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+
+/* ---- metric readouts (engineering style) ---- */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.metric {
+  background: var(--panel-2); border: 1px solid var(--line-soft);
+  border-radius: 6px; padding: 10px 12px; border-left: 3px solid var(--line);
+}
+.metric .m-label { font-size: 10px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.6px; }
+.metric .m-value { font-family: var(--mono); font-size: 20px; font-weight: 600; margin-top: 3px; line-height: 1.1; }
+.metric .m-unit { font-size: 11px; color: var(--fg-dim); font-weight: 400; margin-left: 2px; }
+.metric.ok { border-left-color: var(--ok); }
+.metric.caution { border-left-color: var(--caution); }
+.metric.alarm { border-left-color: var(--alarm); }
+.metric.ok .m-value { color: var(--ok); }
+.metric.caution .m-value { color: var(--caution); }
+.metric.alarm .m-value { color: var(--alarm); }
+
+/* ---- gauge (value within a safety band) ---- */
+.gauge { margin: 6px 0 12px; }
+.gauge-head { display: flex; justify-content: space-between; font-size: 11px; color: var(--fg-dim); margin-bottom: 4px; }
+.gauge-head strong { font-family: var(--mono); color: var(--fg); }
+.gauge-track { position: relative; height: 8px; border-radius: 4px; background: #0b121b; overflow: hidden; border: 1px solid var(--line-soft); }
+.gauge-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 4px; }
+.gauge-limit { position: absolute; top: -2px; width: 2px; height: 12px; background: var(--alarm); }
+.gauge-scale { display: flex; justify-content: space-between; font-size: 9px; color: var(--fg-faint); margin-top: 2px; font-family: var(--mono); }
+
+.kv { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 18px; }
+.kv > div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line-soft); padding-bottom: 4px; }
+.kv span { color: var(--fg-dim); font-size: 12px; }
+.kv strong { color: var(--fg); font-family: var(--mono); font-size: 12.5px; }
+
+.ops-tag {
+  margin: 12px 0 0; color: var(--caution); font-size: 11.5px; font-family: var(--mono);
+  padding: 4px 8px; background: #241d0d; border-radius: 4px; display: inline-block;
+}
+.ops-counter { color: var(--ok); font-size: 12.5px; margin: 4px 0; font-family: var(--mono); }
+.ops-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.ops-list li { font-size: 12px; border-left: 2px solid var(--line); padding-left: 9px; line-height: 1.5; }
+.ops-list .muted, .muted { color: var(--fg-faint); }
+
+.pill {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 10px;
+  color: #06121a; font-weight: 700; margin-right: 6px; text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.pill.clamp { background: var(--caution); }
+.pill.override { background: var(--heat); }
+.pill.fault { background: var(--alarm); color: #fff; }
+
+/* ---- sparkline ---- */
+.spark { margin-bottom: 12px; }
+.spark-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--fg-dim); }
+.spark-label strong { font-family: var(--mono); }
+.spark-range { display: flex; justify-content: space-between; font-size: 9px; color: var(--fg-faint); font-family: var(--mono); }
+.spark svg { width: 100%; display: block; }
+.spark.empty { color: var(--fg-faint); font-size: 12px; }
+
+/* ---- agents ---- */
+.ops-agents { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+.coord-banner { grid-column: 1 / -1; border-color: var(--accent); background: linear-gradient(100deg, #10242b, var(--panel) 55%); }
+.coord-banner h2 { color: #5ff0f8; border-color: #1c4a50; }
+.agent h2 { color: var(--fg); }
+.agent .goal { color: var(--fg); margin: 0 0 7px; font-size: 12.5px; }
+.agent .cycle, .agent .owns { color: var(--fg-dim); font-size: 11.5px; margin: 5px 0; }
+.agent code, .payload, .evidence {
+  background: #0b121b; border: 1px solid var(--line-soft); border-radius: 4px;
+  padding: 1px 5px; color: #7fd4de; font-size: 11px; font-family: var(--mono);
+}
+.evidence { display: block; margin-top: 4px; padding: 7px 9px; white-space: pre-wrap; color: #7ee0b4; }
+
+/* ---- filters + tables ---- */
+.ops-filter { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.ops-filter button { font-size: 11.5px; border-radius: 5px; }
+.ops-filter button.active { background: var(--panel); color: #fff; border-color: var(--accent); }
+
+.ops-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono); }
+.ops-table th, .ops-table td { text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+.ops-table th {
+  color: var(--fg-dim); font-weight: 500; position: sticky; top: 0;
+  background: var(--panel); font-family: var(--sans); text-transform: uppercase;
+  font-size: 10px; letter-spacing: 0.6px;
+}
+.ops-table tr:hover td, .ops-table tbody tr:hover { background: var(--panel-2); }
+.ops-table td.best, .ops-table tr.best td { background: #10281a; color: var(--ok); font-weight: 600; }
+.ops-table.compare td:first-child { color: var(--fg-dim); font-family: var(--sans); }
+.payload { max-width: 440px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+
+.ops-compare { display: flex; flex-direction: column; gap: 16px; }

@@ -29,6 +29,7 @@ SEED/
       App.tsx
       store.ts
       api/                   API contract and client
+      ops/                   Multi-agent Operations Center
       three/                 3D scene components
       ui/                    Dashboard and presentation components
   backend/
@@ -36,7 +37,10 @@ SEED/
     run_server.py            Local development API server
     requirements.txt
     thermalloop/             FastAPI + physics simulation
+      ops/                   Stepped engine, 8 agents, safety and optimizer
   config/                    Shared JSON data contract
+  docs/                      Agent architecture and status
+  tests/                     Physics, agent and operations API tests
   Dockerfile                 Multi-stage Node/Python production image
   render.yaml                Render Blueprint
 ```
@@ -75,6 +79,28 @@ instanced to keep draw calls low. Floor and soil textures are generated locally.
 The illustrated view arranges the same rack IDs for readability; Simulation view
 retains the engineering coordinates. These visual details do not change simulated
 rack counts, hydraulic routing or physics inputs.
+
+## Autonomous Operations Center (simulation only)
+
+Open `/?ops=1` (or use **Operations · Agents** in the 3D header) to monitor and
+control the simulated facility using eight deterministic operational agents.
+The original 3D illustration and 1:1 simulation remain available at `/`.
+
+- **Mode A:** rule-based baseline; **B:** reactive agents; **C:** agents with
+  short-horizon MPC-lite look-ahead and explicit candidate scores.
+- A supervisory coordinator proposes `protect`, `recover` or `conserve`
+  targets, with single-writer actuator ownership and an independent safety
+  arbiter that clamps unsafe actions.
+- The UI includes agent decisions, event timelines, scenario/fault injection,
+  three-mode comparisons and experiment records.
+- The operations API is under `/api/ops` (`/api/ops/meta`, `/session`,
+  `/compare`, etc.). In-memory sessions are not durable; experiment/comparison
+  records use a local SQLite file under `results/`.
+
+These agents are deterministic rules and simulations, **not LLMs**. Their
+control is limited to the digital twin: `real_device_enabled` is false, and
+there is no real-hardware actuator path. See `docs/AGENTS_STATUS.md` for
+validated behavior and limitations.
 
 ## Requirements
 
@@ -131,9 +157,10 @@ database or persistent storage if long-term result retention becomes necessary.
 
 ## Validation
 
-Run `python -m pytest -q tests` from the repository root for piping regression tests.
-They check shared-node continuity, orthogonal routing, separate heat-exchanger and tank
-ports, GPU manifold connections, and zero flow in inactive cooler/storage branches.
+Run `python -m pytest -q tests` from the repository root for piping, agent,
+safety and operations API regression tests. The piping checks cover shared-node
+continuity, orthogonal routing, separate heat-exchanger and tank ports, GPU
+manifold connections, and zero flow in inactive cooler/storage branches.
 Pipes use straight runs with bounded elbows; the supply and return risers sit together
 on the building's right edge. The external buffer and treatment tanks remain branches
 of the secondary circuit, hydraulically isolated from the GPU loop at the B2 exchanger.
@@ -153,9 +180,10 @@ npm run build
 
 ## Optional integrations
 
-Blender, OpenModelica, EnergyPlus, and optimization tooling described by the
-larger research project are **not included** in this minimal repository. The
-web app uses procedural Three.js geometry and the simplified physics backend.
+Blender, OpenModelica, EnergyPlus and other external engineering solvers are
+**not included**. The built-in operations layer provides local, deterministic
+MPC-lite optimization against the simplified physics engine; it is not a
+replacement for a calibrated plant or an external high-fidelity solver.
 
 ## License / status
 

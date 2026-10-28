@@ -232,6 +232,22 @@ td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; color: #dce8
   font-weight: 650;
 }
 
+/* Operations Center entry without changing the original 3D layout. */
+.ops-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: linear-gradient(#2aa7c4, #1c7f98);
+  border: 1px solid #38cfd9;
+  color: #eafcff;
+  font-weight: 650;
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ops-button:hover { background: linear-gradient(#33b7d6, #228ba6); }
+
 /* Guided presentation overlay */
 .presentation {
   position: absolute;
