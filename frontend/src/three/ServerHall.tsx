@@ -1,22 +1,33 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { SceneObject, StepRecord } from "../api/types";
+import { useStore } from "../store";
+import { makeRackFace } from "./surfaceTextures";
 import type { FloorId } from "../store";
 import { worldPosition } from "./coordinates";
 import EngineeringLabel from "./Label";
 
 function Rack({
   rack,
+  face,
   step,
   selected,
   onSelect,
 }: {
   rack: SceneObject;
+  face: THREE.Texture;
   step?: StepRecord;
   selected: boolean;
   onSelect: (id: string) => void;
 }) {
+  const illustration = useStore(s => s.illustration);
   const position = worldPosition(rack.center!);
+  if (illustration) {
+    // Spread the same 12 racks across the illustrated floor, not additional equipment.
+    const index = Number(rack.id.split("_").slice(-1)[0]) - 1;
+    position[0] = -12.8 + (index % 6) * 4.5 + (index >= 6 ? 1.7 : 0);
+    position[1] += .2;
+  }
   const load = step?.rack_power_W?.[rack.id]
     ? step.rack_power_W[rack.id] / ((rack.nominal_power_kW ?? 1) * 1000)
     : step?.gpu_load_fraction ?? 0;
@@ -25,6 +36,7 @@ function Rack({
   return (
     <group
       position={position}
+      scale={illustration ? [2.2, 1.18, 1] : [1, 1, 1]}
       onClick={(event) => {
         event.stopPropagation();
         onSelect(rack.id);
@@ -49,23 +61,16 @@ function Rack({
           </mesh>
         )),
       )}
-      {/* visible GPU server blades */}
-      {Array.from({ length: 9 }, (_, i) => (
-        <group key={i} position={[0, -0.86 + i * 0.205, 0.611]}>
-          <mesh>
-            <boxGeometry args={[0.69, 0.155, 0.035]} />
-            <meshStandardMaterial color="#243746" metalness={0.72} roughness={0.36} />
-          </mesh>
-          <mesh position={[-0.26, 0, 0.025]}>
-            <boxGeometry args={[0.065, 0.035, 0.025]} />
-            <meshStandardMaterial color={ledColor} emissive={ledColor} emissiveIntensity={4.5} toneMapped={false} />
-          </mesh>
-          <mesh position={[-0.16, 0, 0.025]}>
-            <boxGeometry args={[0.04, 0.035, 0.025]} />
-            <meshStandardMaterial color="#4de2a8" emissive="#4de2a8" emissiveIntensity={3} toneMapped={false} />
-          </mesh>
-        </group>
-      ))}
+      {/* Fan trays, handles and blade separators share one detailed face texture. */}
+      <mesh position={[0, 0, .611]}>
+        <planeGeometry args={[.7, 2.04]} />
+        <meshStandardMaterial map={face} emissiveMap={face} emissive="#ffffff" emissiveIntensity={.25} metalness={.35} roughness={.45} />
+      </mesh>
+      {[-.345, .345].map(x => <mesh key={`status-rail-${x}`} position={[x, 0, .635]}>
+        <boxGeometry args={[.012, 1.98, .018]} />
+        <meshStandardMaterial color={ledColor} emissive={ledColor} emissiveIntensity={1.8} toneMapped={false} />
+      </mesh>)}
+      <mesh position={[0, 1.08, 0]}><boxGeometry args={[.84, .06, 1.24]} /><meshStandardMaterial color="#687986" metalness={.8} roughness={.25} /></mesh>
       {/* rear direct-to-chip manifold */}
       <mesh position={[0.31, 0, -0.64]}>
         <cylinderGeometry args={[0.035, 0.035, 1.85, 12]} />
@@ -99,6 +104,9 @@ export default function ServerHalls({
   selectedId?: string;
   onSelect: (id: string) => void;
 }) {
+  const face = useMemo(makeRackFace, []);
+  useEffect(() => () => face.dispose(), [face]);
+  const config = useStore(s => s.config);
   const racks = useMemo(
     () => objects.filter((object) => object.kind === "gpu_rack"),
     [objects],
@@ -113,12 +121,18 @@ export default function ServerHalls({
           <Rack
             key={rack.id}
             rack={rack}
+            face={face}
             step={step}
             selected={selectedId === rack.id}
             onSelect={onSelect}
           />
         ) : null,
       )}
+      {config?.geometry.floors.filter((floor: { use: string }) => floor.use === "gpu_data_center").map((floor: { id: FloorId; z: [number, number] }) => visibleFloors[floor.id] && <group key={`service-tray-${floor.id}`} position={[0, floor.z[1] - .8, -1.5]} name={`electrical-cable-tray-${floor.id}`}>
+        {[-.55, .55].map(z => <mesh key={z} position={[0, 0, z]}><boxGeometry args={[30, .16, .08]} /><meshStandardMaterial color="#77858c" metalness={.8} roughness={.36} /></mesh>)}
+        {Array.from({ length: 20 }, (_, i) => <mesh key={i} position={[-14.7 + i * 1.55, -.04, 0]}><boxGeometry args={[.06, .06, 1.1]} /><meshStandardMaterial color="#83929a" metalness={.8} /></mesh>)}
+        {[-10, 0, 10].map(x => <mesh key={x} position={[x, .3, 0]}><boxGeometry args={[.035, .6, .035]} /><meshStandardMaterial color="#7e8d97" metalness={.8} /></mesh>)}
+      </group>)}
       {pdus.map((pdu) =>
         visibleFloors[pdu.floor_id as FloorId] ? (
           <group key={pdu.id} position={worldPosition(pdu.center!)} onClick={() => onSelect(pdu.id)}>
