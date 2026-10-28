@@ -60,6 +60,9 @@ export default function App() {
         <button className="present-button" onClick={() => useStore.getState().startPresentation()}>
           ▶ Present
         </button>
+        <a className="ops-button" href="?ops=1" title="Open the multi-agent Operations Center">
+          ⬡ Operations · Agents
+        </a>
         <span className="disclaimer">
           {result?.disclaimer ?? "Simplified engineering simulation — not measured data."}
         </span>

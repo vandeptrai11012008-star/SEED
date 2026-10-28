@@ -11,6 +11,7 @@ Endpoints (see docs/API.md):
 from __future__ import annotations
 
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
@@ -28,11 +29,20 @@ from .schemas import (
     StateResponse,
 )
 from .simulation import run_simulation
+from .ops.api import router as ops_router
+
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    yield
+    from .ops.api import _STORE
+    _STORE.close()
 
 app = FastAPI(
     title="ThermalLoop AI Center API",
     version=__version__,
     description="Physics-based digital twin of an AI data center waste-heat recovery loop.",
+    lifespan=_lifespan,
 )
 
 app.add_middleware(
@@ -44,6 +54,8 @@ app.add_middleware(
 
 _RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
 store = ResultsStore(_RESULTS_DIR)
+
+app.include_router(ops_router)
 
 
 @app.get("/api/health", response_model=HealthResponse)
