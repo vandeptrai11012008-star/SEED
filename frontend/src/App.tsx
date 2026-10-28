@@ -77,6 +77,9 @@ export default function App() {
       <div className="canvas-wrap">
         <Viewer />
         {illustration && <>
+          <a className="agents-shortcut" href="?ops=1" aria-label="Open AI Agents Operations Center">
+            <span aria-hidden="true">🤖</span> AI Agents
+          </a>
           <div className="scene-brand"><span className="eyebrow">THERMALLOOP AI CENTER</span><h1>Powered by AI.<br />Growing a greener future.</h1><p>Recovering heat · Cultivating the future</p></div>
           <aside className={`flow-guide ${legendOpen ? "" : "collapsed"}`} aria-label="Heat flow legend">
             <button className="guide-heading" onClick={() => setLegendOpen(!legendOpen)} aria-expanded={legendOpen}>The heat recovery loop <span>{legendOpen ? "−" : "+"}</span></button>
