@@ -349,6 +349,29 @@ td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; color: #dce8
 .illustration-mode .overlay-controls { left: 26px; right: auto; bottom: 56px; width: 310px; opacity: .94; }
 .illustration-mode.tools-open > .right { display: block; position: absolute; top: 70px; bottom: 110px; right: 24px; width: 320px; border: 1px solid #4a6470; border-radius: 14px; z-index: 12; box-shadow: 0 18px 60px #10243555; }
 .view-toggle { position: absolute; right: 24px; top: 18px; z-index: 15; background: #142b3ce8; border: 1px solid #ffffff60; border-radius: 24px; padding: 10px 16px; box-shadow: 0 5px 20px #1234; }
+.agents-shortcut {
+  position: absolute;
+  right: 18px;
+  bottom: 76px;
+  z-index: 16;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 1px solid #76ecff;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #138fc0, #087b9f);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+  box-shadow: 0 7px 22px #06364880;
+}
+.agents-shortcut:hover { background: linear-gradient(135deg, #1aabd9, #0b8eb8); }
+.agents-shortcut:focus-visible { outline: 3px solid #f6be4f; outline-offset: 3px; }
+@media (max-width: 850px) {
+  .agents-shortcut { top: 78px; left: 16px; right: auto; bottom: auto; }
+}
 .app:not(.illustration-mode) .view-toggle { top: 64px; right: 365px; }
 .scene-brand { position: absolute; left: 30px; top: 24px; pointer-events: none; color: #102d40; }
 .eyebrow { font-size: 10px; font-weight: 750; letter-spacing: .2em; }
