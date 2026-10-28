@@ -1,9 +1,13 @@
+import { useEffect, useMemo } from "react";
+import * as THREE from "three";
+import { Html } from "@react-three/drei";
 import { useStore } from "../store";
 import Architecture from "./Architecture";
 import Greenhouse from "./Greenhouse";
 import Hydronics from "./Hydronics";
 import InteriorEquipment from "./InteriorEquipment";
 import ServerHalls from "./ServerHall";
+import { LandscapeTrees } from "./Vegetation";
 
 // Entirely procedural facility. No GLB / Blender / external assets: every mesh
 // below is generated at runtime with Three.js geometry.
@@ -11,20 +15,14 @@ function UndergroundSection() {
   return (
     <group name="underground-cross-section">
       {/* Utility tunnel: open-front concrete shell between building and greenhouse. */}
-      <mesh position={[22, -3.02, 0]} receiveShadow>
+      <mesh position={[22, -4.95, 10.7]} receiveShadow>
         <boxGeometry args={[8.4, 0.18, 2.8]} />
         <meshStandardMaterial color="#69737a" roughness={0.88} />
       </mesh>
-      <mesh position={[22, -1.48, 0]}>
-        <boxGeometry args={[8.4, 0.18, 2.8]} />
+      <mesh position={[22, -4.05, 9.3]} receiveShadow>
+        <boxGeometry args={[8.4, 1.8, 0.16]} />
         <meshStandardMaterial color="#69737a" roughness={0.88} />
       </mesh>
-      {[-1.32, 1.32].map((z) => (
-        <mesh key={z} position={[22, -2.25, z]}>
-          <boxGeometry args={[8.4, 1.55, 0.16]} />
-          <meshStandardMaterial color="#69737a" roughness={0.88} />
-        </mesh>
-      ))}
       {/* Reinforced concrete foundation raft under the whole building footprint. */}
       <mesh position={[0, -8.85, 0]} receiveShadow>
         <boxGeometry args={[37.5, 0.7, 23.5]} />
@@ -104,7 +102,53 @@ function AccessCore({ visibleFloors }: { visibleFloors: Record<string, boolean> 
   );
 }
 
+
+function ReferenceLandscape() {
+  const earth = useMemo(() => {
+    const size = 128;
+    const data = new Uint8Array(size * size * 4);
+    let seed = 173;
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const grain = (seed / 4294967296 - .5) * 28;
+      const layer = Math.sin(y * .16) * 9 + Math.sin(y * .51) * 4;
+      const i = (y * size + x) * 4;
+      data.set([105 + grain + layer, 77 + grain * .7 + layer, 48 + grain * .45, 255], i);
+    }
+    const texture = new THREE.DataTexture(data, size, size);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.repeat.set(5, 2);
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+  useEffect(() => () => earth.dispose(), [earth]);
+  return <group name="landscape-cutaway">
+    <mesh position={[40, -4.4, -9]} receiveShadow><boxGeometry args={[44, 8.7, 3]} /><meshStandardMaterial map={earth} color="#ddd1b9" roughness={1} /></mesh>
+    <mesh position={[40, -0.15, -9]} receiveShadow><boxGeometry args={[44, 0.45, 3.2]} /><meshStandardMaterial color="#658449" roughness={1} /></mesh>
+    <mesh position={[18, -0.18, -21]} receiveShadow><boxGeometry args={[112, 0.4, 18]} /><meshStandardMaterial color="#6d8e51" roughness={1} /></mesh>
+    <LandscapeTrees />
+  </group>;
+}
+
+function HeatFlowMarkers() {
+  const illustration = useStore(s => s.illustration);
+  const preset = useStore(s => s.cameraPreset);
+  if (!illustration || preset !== "front_cutaway") return null;
+  const markers: { n: number; p: [number, number, number]; cold?: boolean }[] = [
+    { n: 1, p: [14.8, 16.5, 10], cold: true },
+    { n: 2, p: [16.4, 11, 8.3] },
+    { n: 3, p: [12.6, 1.5, 10.7] },
+    { n: 4, p: [-5.8, -5.5, 8] },
+    { n: 5, p: [24, -3.5, 10.7] },
+    { n: 6, p: [55, -2, 7], cold: true },
+    { n: 7, p: [30, -6.8, 10.7], cold: true },
+  ];
+  return <group>{markers.map(m => <Html key={m.n} position={m.p} center zIndexRange={[5, 0]}><span className={`flow-marker ${m.cold ? "cold" : ""}`}>{m.n}</span></Html>)}</group>;
+}
+
 export default function Building() {
+  const illustration = useStore((state) => state.illustration);
   const config = useStore((state) => state.config);
   const scene = useStore((state) => state.scene);
   const cutaway = useStore((state) => state.cutaway);
@@ -120,15 +164,18 @@ export default function Building() {
   const beds = scene.objects.filter((object) => object.kind === "growing_bed");
 
   return (
-    <group name="thermalloop-facility" onPointerMissed={() => select(undefined)}>
+    <group scale={illustration ? [0.82, 1.65, 1] : [1, 1, 1]} name="thermalloop-facility" onPointerMissed={() => select(undefined)}>
       <Architecture
         config={config}
         visibleFloors={visibleFloors}
         cutaway={cutaway}
         undergroundView={cameraPreset === "underground"}
       />
-      <AccessCore visibleFloors={visibleFloors} />
+      {(!illustration || !cutaway) && <AccessCore visibleFloors={visibleFloors} />}
       <UndergroundSection />
+      <ReferenceLandscape />
+      <mesh position={[40, -8.15, 10.7]} receiveShadow><boxGeometry args={[15, .5, 6]} /><meshStandardMaterial color="#a2a39b" roughness={.85} /></mesh>
+      <HeatFlowMarkers />
       <ServerHalls
         objects={scene.objects}
         visibleFloors={visibleFloors}

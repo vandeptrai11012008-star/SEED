@@ -1,0 +1,57 @@
+name: Validate Render deployment
+on: [push, pull_request]
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --prefix frontend
+      - run: npm run build --prefix frontend
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r backend/requirements.txt
+      - run: python -m pytest -q tests
+      - name: Exercise the API
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, "backend")
+          from fastapi.testclient import TestClient
+          from thermalloop.app import app
+          with TestClient(app) as client:
+              for route in ("/api/health", "/api/config", "/api/scene", "/api/state"):
+                  response = client.get(route)
+                  assert response.status_code == 200, (route, response.text)
+              response = client.post("/api/simulate", json={"mode": "simplified_physics", "duration_s": 600, "timestep_s": 600})
+              assert response.status_code == 200, response.text
+          PY
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t thermalloop:ci .
+      - name: Verify the Render-style container responds
+        run: |
+          docker run -d --name thermalloop-ci -e PORT=10000 -p 10000:10000 thermalloop:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:10000/api/health; then
+              curl -fsS http://127.0.0.1:10000/ > /dev/null
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs thermalloop-ci
+          exit 1

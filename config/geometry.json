@@ -38,8 +38,8 @@
   "utility_corridor": {
     "id": "corridor_underground",
     "description": "Underground insulated utility corridor carrying buried supply/return pipes between B2 plant and greenhouse.",
-    "z": [-3.0, -1.5],
-    "path": [[18.0, 0.0, -2.25], [26.0, 0.0, -2.25]],
+    "z": [-4.8, -3.0],
+    "path": [[18.0, -10.7, -4.1], [26.0, -10.7, -4.1]],
     "width_y": 2.5
   },
   "gpu_floor_layout": {

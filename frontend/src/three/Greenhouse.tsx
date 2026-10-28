@@ -2,7 +2,10 @@ import { useMemo } from "react";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
 import type { AppConfig, SceneObject, StepRecord } from "../api/types";
+import { useStore } from "../store";
 import { tempColor } from "./colors";
+import { CropBed } from "./Vegetation";
+import { useSurfaceTexture } from "./surfaceTextures";
 import EngineeringLabel from "./Label";
 
 // Serpentine soil-heating circuit buried under one bed, generated as a tube.
@@ -40,25 +43,6 @@ function SoilHeatingCoil({
   );
 }
 
-function Plant({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
-  return (
-    <group position={position} scale={scale}>
-      <mesh position={[0, 0.34, 0]}>
-        <cylinderGeometry args={[0.025, 0.035, 0.68, 8]} />
-        <meshStandardMaterial color="#3f7f3c" roughness={0.8} />
-      </mesh>
-      {[-0.18, 0.02, 0.22].map((y, index) => (
-        <group key={y} position={[0, 0.45 + y, 0]} rotation={[0, index * 2.1, index % 2 ? -0.5 : 0.5]}>
-          <mesh position={[0.15, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <sphereGeometry args={[0.18, 10, 8]} />
-            <meshStandardMaterial color={index === 2 ? "#69a94c" : "#4b943f"} roughness={0.75} />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
-}
-
 export default function Greenhouse({
   config,
   beds,
@@ -74,6 +58,8 @@ export default function Greenhouse({
   selectedId?: string;
   onSelect: (id: string) => void;
 }) {
+  const illustration = useStore(s => s.illustration);
+  const soilTexture = useSurfaceTexture("soil");
   const soilSupplyC = step?.secondary_supply_C ?? 45;
   const greenhouse = config.geometry.greenhouse;
   const centerX = greenhouse.center[0] as number;
@@ -87,6 +73,11 @@ export default function Greenhouse({
     [greenhouse.depth_y, halfDepth],
   );
   const archPoints = (worldY: number): [number, number, number][] => {
+    if (illustration) return [
+      [centerX - halfWidth, 0, -worldY], [centerX - halfWidth, eave, -worldY],
+      [centerX, greenhouse.max_height_z, -worldY], [centerX + halfWidth, eave, -worldY],
+      [centerX + halfWidth, 0, -worldY],
+    ];
     const points: [number, number, number][] = [[centerX - halfWidth, 0, -worldY], [centerX - halfWidth, eave, -worldY]];
     for (let i = 0; i <= 24; i += 1) {
       const theta = Math.PI - (Math.PI * i) / 24;
@@ -105,28 +96,33 @@ export default function Greenhouse({
       {/* Glass side walls; arched steel frames define the roof exactly. */}
       <mesh position={[centerX - halfWidth, eave / 2, 0]}>
         <boxGeometry args={[0.08, eave, greenhouse.depth_y]} />
-        <meshPhysicalMaterial color="#a8e0d0" transmission={0.82} transparent opacity={0.28} roughness={0.08} metalness={0.02} depthWrite={false} />
+        <meshPhysicalMaterial color="#a8e0d0" transmission={0.3} transparent opacity={0.17} roughness={0.08} metalness={0.02} depthWrite={false} />
       </mesh>
       <mesh position={[centerX + halfWidth, eave / 2, 0]}>
         <boxGeometry args={[0.08, eave, greenhouse.depth_y]} />
-        <meshPhysicalMaterial color="#a8e0d0" transmission={0.82} transparent opacity={0.28} roughness={0.08} metalness={0.02} depthWrite={false} />
+        <meshPhysicalMaterial color="#a8e0d0" transmission={0.3} transparent opacity={0.17} roughness={0.08} metalness={0.02} depthWrite={false} />
       </mesh>
       <mesh position={[centerX, eave / 2, -halfDepth]}>
         <boxGeometry args={[greenhouse.width_x, eave, 0.08]} />
-        <meshPhysicalMaterial color="#a8e0d0" transmission={0.78} transparent opacity={0.24} roughness={0.1} depthWrite={false} />
+        <meshPhysicalMaterial color="#a8e0d0" transmission={0.3} transparent opacity={0.13} roughness={0.1} depthWrite={false} />
       </mesh>
       <mesh position={[centerX, eave / 2, halfDepth]}>
         <boxGeometry args={[greenhouse.width_x, eave, 0.08]} />
-        <meshPhysicalMaterial color="#a8e0d0" transmission={0.78} transparent opacity={0.24} roughness={0.1} depthWrite={false} />
+        <meshPhysicalMaterial color="#a8e0d0" transmission={0.3} transparent opacity={0.13} roughness={0.1} depthWrite={false} />
       </mesh>
       {/* Semi-cylindrical PBR glass roof, flattened to specified 5 m maximum. */}
-      <mesh position={[centerX, eave, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1, roofRise / halfWidth]}>
+      {!illustration && <mesh position={[centerX, eave, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1, roofRise / halfWidth]}>
         <cylinderGeometry args={[halfWidth, halfWidth, greenhouse.depth_y, 64, 1, true, 0, Math.PI]} />
         <meshPhysicalMaterial color="#b7eadc" transmission={0.82} transparent opacity={0.22} roughness={0.08} side={2} depthWrite={false} />
-      </mesh>
+      </mesh>}
 
+      {illustration && [-1, 1].map(side => <mesh key={`roof-${side}`} position={[centerX + side * halfWidth / 2, eave + roofRise / 2, 0]} rotation={[0, 0, -side * Math.atan2(roofRise, halfWidth)]}>
+        <boxGeometry args={[Math.hypot(halfWidth, roofRise), .045, greenhouse.depth_y]} />
+        <meshPhysicalMaterial color="#cde6f0" transparent opacity={.22} roughness={.09} metalness={.12} clearcoat={1} clearcoatRoughness={.1} depthWrite={false} />
+      </mesh>)}
+      {illustration && Array.from({ length: 11 }, (_, i) => centerX - halfWidth + i * greenhouse.width_x / 10).map(x => <Line key={`front-mullion-${x}`} points={[[x, 0, halfDepth], [x, eave + roofRise * (1 - Math.abs(x - centerX) / halfWidth), halfDepth]]} color="#746955" lineWidth={2.4} />)}
       {frameStations.map((station) => (
-        <Line key={station} points={archPoints(station)} color="#8a9a94" lineWidth={1.7} />
+        <Line key={station} points={archPoints(station)} color="#706a59" lineWidth={2.3} />
       ))}
       {[0, eave, greenhouse.max_height_z].map((height) => (
         <Line
@@ -137,6 +133,12 @@ export default function Greenhouse({
         />
       ))}
 
+      {[-halfDepth, halfDepth].map(z => <mesh key={`greenhouse-plinth-${z}`} position={[centerX, -.12, z]} receiveShadow>
+        <boxGeometry args={[greenhouse.width_x + .3, .45, .35]} /><meshStandardMaterial color="#a2a294" roughness={.85} />
+      </mesh>)}
+      {Array.from({ length: 9 }, (_, i) => centerX - halfWidth + 1.5 + i * 3.35).map(x => <group key={`roof-rails-${x}`}>
+        <Line points={[[x, eave + roofRise * (1 - Math.abs(x - centerX) / halfWidth), -halfDepth], [x, eave + roofRise * (1 - Math.abs(x - centerX) / halfWidth), halfDepth]]} color="#8b8671" lineWidth={1.5} />
+      </group>)}
       {beds.map((bed) => {
         const [x, y] = bed.center!;
         return (
@@ -158,13 +160,11 @@ export default function Greenhouse({
               <>
                 <mesh position={[0, 0.3, 0]} receiveShadow castShadow>
                   <boxGeometry args={[bed.size![0] - 0.1, 0.24, bed.size![1] - 0.1]} />
-                  <meshStandardMaterial color="#45341f" roughness={1} />
+                  <meshStandardMaterial map={soilTexture} bumpMap={soilTexture} bumpScale={.045} roughness={1} />
                 </mesh>
-                {Array.from({ length: 15 }, (_, i) => {
-                  const px = -3.1 + (i % 5) * 1.55;
-                  const pz = -2.0 + Math.floor(i / 5) * 2.0;
-                  return <Plant key={i} position={[px, 0.42, pz]} scale={0.8 + (i % 3) * 0.08} />;
-                })}
+                <group position={[0, .42, 0]}>
+                  <CropBed width={bed.size![0]} depth={bed.size![1]} scale={illustration ? 1.55 : .95} />
+                </group>
               </>
             ) : (
               <SoilHeatingCoil width={bed.size![0]} depth={bed.size![1]} temperatureC={soilSupplyC} />
@@ -182,9 +182,9 @@ export default function Greenhouse({
       })}
 
       <EngineeringLabel
-        text="Research Greenhouse"
+        text="Greenhouse"
         subtext={`${greenhouse.width_x} × ${greenhouse.depth_y} × ${greenhouse.max_height_z} m · soil ${step?.soil_temp_C?.toFixed(1) ?? "—"} °C`}
-        position={[centerX, 6.3, 0]}
+        position={[centerX, illustration ? 4.8 : 6.3, halfDepth + 1]}
         accent="#66c786"
       />
       <pointLight position={[centerX, 4.3, 0]} intensity={36} distance={35} color="#ffe8ba" />

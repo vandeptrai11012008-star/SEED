@@ -16,45 +16,39 @@ hydronic circuits, and simulation results.
 > after you execute those tools locally. Nothing here fakes measured data or
 > random values presented as predictions.
 
-## Architecture at a glance
 
+## Repository structure
+
+```text
+SEED/
+  frontend/                  React + TypeScript + Three.js / Vite
+    index.html
+    package.json
+    src/
+      main.tsx
+      App.tsx
+      store.ts
+      api/                   API contract and client
+      three/                 3D scene components
+      ui/                    Dashboard and presentation components
+  backend/
+    serve.py                 Production ASGI server (reads PORT)
+    run_server.py            Local development API server
+    requirements.txt
+    thermalloop/             FastAPI + physics simulation
+  config/                    Shared JSON data contract
+  Dockerfile                 Multi-stage Node/Python production image
+  render.yaml                Render Blueprint
 ```
-thermal-loop/
-  frontend/      React + TypeScript + Three.js / React Three Fiber viewer + dashboards
-  backend/       Python + FastAPI simplified-physics engine (exchangeable backend)
-  blender/       Blender Python API script -> full-facility GLB export
-  modelica/      OpenModelica (.mo) model generator + run script
-  energyplus/    EnergyPlus IDF generator
-  optimization/  Python GPU-scheduling / heat-recovery optimizer
-  config/        Shared JSON data contract (single source of truth)
-  data/          Generated artifacts (GLB, etc.)
-  results/       Saved simulation runs (run_*.json)
-  tests/         pytest unit + API + conservation tests
-  docs/          Architecture, requirements, API docs
-```
-
-Two hydraulically isolated closed circuits, coupled only through the B2 heat
-exchanger:
-
-- **Primary (IT liquid cooling):** blue supply manifold to GPU floors, red hot
-  risers down to `hx_b2_primary_001`, cooled water back to the GPU supply, with
-  pumps, isolation/modulating valves, and auxiliary heat rejection.
-- **Secondary (heat recovery):** recovers energy at the HX, charges the thermal
-  buffer tank `tank_buffer_001`, and feeds parallel controllable branches to the
-  robot lab, B1 seed zones, and (through buried insulated pipe in the utility
-  corridor) the greenhouse soil-heating loop. A heat pump optionally upgrades
-  temperature; the capacity-limited dry cooler rejects surplus primary heat.
-  Water treatment is a closed-loop sidestream (`tank_verify_001`), not an open
-  tank interrupting the loop.
 
 ## Interactive 3D facility
 
-The default auto-fit view frames the complete 74 m-wide site. The procedural
+The default illustrated cutaway frames the complete site with an exaggerated vertical scale for legibility. Simulation view retains the 1:1 SI geometry. The procedural
 R3F model includes structural slabs/columns/beams, a transparent curtain wall,
 all six cutaway floors, detailed GPU racks and cooling manifolds, robot cells,
 seed racks and growth chambers, B2 plate HX/pumps/valves/two tanks, an arched
 glass greenhouse with plants and soil beds, and the underground utility tunnel.
-All 33 rendered pipe segments come from `config/network.json`; animated particles
+All 40 rendered pipe segments come from `config/network.json`; animated particles
 follow their real `from -> to` paths and read temperature/mass flow by stable ID.
 
 Camera controls include auto-fit, isometric, front cutaway, WASD walkthrough,
@@ -75,6 +69,13 @@ pre-generated GLB assets in the application run path. The optional
 `blender/` scripts remain in the repo for offline authoring only and are not
 required to build, run, or view the digital twin.
 
+GPU rack faces use a local detailed panel texture with load-linked status rails.
+Crops have curved leaves, growing supports and fruit; crop and tree geometry is
+instanced to keep draw calls low. Floor and soil textures are generated locally.
+The illustrated view arranges the same rack IDs for readability; Simulation view
+retains the engineering coordinates. These visual details do not change simulated
+rack counts, hydraulic routing or physics inputs.
+
 ## Requirements
 
 - **Windows 11** (instructions below; works on macOS/Linux too)
@@ -82,81 +83,79 @@ required to build, run, or view the digital twin.
 - **Node.js 18+** (tested on 24)
 - Optional, for high-fidelity modes: Blender, OpenModelica, EnergyPlus
 
-## Quick start (Windows 11)
 
-Open two terminals.
+## Local development
 
-**Terminal 1 — backend**
+Requirements: Node.js 20+, Python 3.12+.
+
+From the repository root, start the backend in one terminal:
+
 ```powershell
-cd thermal-loop
-./scripts/setup.ps1      # creates venv-free install of backend deps + checks
-./scripts/run_backend.ps1
-# -> http://127.0.0.1:8000  (OpenAPI docs at /docs)
+python -m pip install -r backend/requirements.txt
+python backend/run_server.py
 ```
 
-**Terminal 2 — frontend**
+The API runs at `http://127.0.0.1:8000` (health: `/api/health`, Swagger: `/docs`).
+
+In another terminal, run the frontend:
+
 ```powershell
-cd thermal-loop/frontend
-& "C:\Program Files\nodejs\npm.cmd" install
-& "C:\Program Files\nodejs\npm.cmd" run dev
-# -> http://localhost:5173  (proxies /api to the backend)
+cd frontend
+npm ci
+npm run dev
 ```
 
-> **PowerShell execution policy note.** If `npm`/`npx` fail with
-> "running scripts is disabled", either call the `.cmd` directly as shown above,
-> or run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+Open `http://localhost:5173`. Vite proxies `/api` to the local backend.
 
-### Backend-only without scripts
-```powershell
-cd thermal-loop/backend
-python -m pip install fastapi uvicorn pydantic httpx pytest
-python run_server.py
-```
+## Render deployment (one web service)
+
+The repository includes a **multi-stage Dockerfile**. The Node stage installs
+frontend dependencies and builds Vite; the Python stage installs FastAPI,
+copies `frontend/dist`, and serves both the UI and API on Render's `PORT`.
+
+1. Push the repository with the directory structure shown above.
+2. On Render, create **New > Blueprint**, select this repository and apply `render.yaml`.
+   It creates a Docker web service on the free plan.
+3. Keep Render's service root at the **repository root**. For a separately
+   created Web Service, choose **Docker** instead of Node/Python.
+4. After deployment, `/` should load the 3D interface and
+   `/api/health` should return a JSON health response.
+
+For this single-service setup, **do not set `VITE_API_BASE`**: browser API calls
+must use the same origin as the frontend. There is no need to upload the
+`thermal-loop-render.zip` file; Docker uses the checked-in source folders.
+
+Generated simulation result files live on the service's filesystem. The free
+Render instance does not preserve these across redeploys/restarts; use a
+database or persistent storage if long-term result retention becomes necessary.
 
 ## Validation
 
-```powershell
-cd thermal-loop
-python scripts/validate_all.py
-```
+Run `python -m pytest -q tests` from the repository root for piping regression tests.
+They check shared-node continuity, orthogonal routing, separate heat-exchanger and tank
+ports, GPU manifold connections, and zero flow in inactive cooler/storage branches.
+Pipes use straight runs with bounded elbows; the supply and return risers sit together
+on the building's right edge. The external buffer and treatment tanks remain branches
+of the secondary circuit, hydraulically isolated from the GPU loop at the B2 exchanger.
 
-This runs the complete 38-test Python suite, TypeScript typecheck, Vite
-production build, and scene/simulation contract validation. It verifies six
-floors, 30 × 18 × 5 m greenhouse geometry, renderable connected pipe paths,
-pipe-to-simulation state binding, mass/energy balances, and the non-measured-data
-label. Live integration can be checked with `python tests/smoke_upgrade.py` while
-both servers are running. Optional Chromium screenshots for camera presets are
-produced by `scripts/capture_views.ps1`.
 
-The balance tests cover capture split, primary circuit (including HX, heat-pump
-source extraction, pipe loss, auxiliary rejection and unrejected heat),
-secondary circuit (delivery, distribution loss, buffer state and standing loss),
-and closed-loop mass residual.
+The GitHub Actions workflow `.github/workflows/verify.yml` checks the
+TypeScript production build, FastAPI health/config/scene endpoints, and
+a production Docker image build + HTTP health check.
 
-## External solver integrations (run locally)
+To run the frontend build locally:
 
 ```powershell
-# Blender geometry + GLB export
-blender --background --python blender/build_model.py -- --out data/thermalloop.glb
-
-# OpenModelica model generation, then simulate
-python modelica/generate_model.py
-omc modelica/run_openmodelica.mos
-
-# EnergyPlus IDF fragment
-python energyplus/generate_idf.py
-# combine with full IDF + EPW, then: energyplus -w weather.epw -d out thermalloop.idf
-
-# Optimization sweep over the simplified backend
-python optimization/optimize.py
+cd frontend
+npm ci
+npm run build
 ```
 
-## Documentation
+## Optional integrations
 
-- `docs/ARCHITECTURE.md` — system architecture and data flow
-- `docs/REQUIREMENTS.md` — engineering requirements and assumptions
-- `docs/API.md` — REST API contract
-- `docs/PHYSICS.md` — the physical models and their simplifications
+Blender, OpenModelica, EnergyPlus, and optimization tooling described by the
+larger research project are **not included** in this minimal repository. The
+web app uses procedural Three.js geometry and the simplified physics backend.
 
 ## License / status
 

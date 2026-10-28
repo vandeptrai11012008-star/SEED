@@ -1,0 +1,80 @@
+{
+  "$schema": "./schema/equipment.schema.json",
+  "description": "Stable equipment inventory. Identifiers match 3D objects, API responses, and simulation outputs. Positions are [X east, Y north, Z up] in meters.",
+  "racks": {
+    "generator": {
+      "floors": ["f1", "f2", "f3"],
+      "per_floor": 12,
+      "id_pattern": "gpu_{floor}_rack_{index:03d}",
+      "nominal_power_kW_each": 41.6667,
+      "note": "12 racks x 41.667 kW = 500 kW per floor."
+    }
+  },
+  "heat_exchangers": [
+    {"id": "hx_b2_primary_001", "floor": "b2", "type": "plate", "position": [-6, -7, -6.25], "effectiveness": 0.85, "ua_W_per_K": 90000.0, "connects": {"primary": ["pump_primary_001"], "secondary": ["tank_buffer_001"]}}
+  ],
+  "pumps": [
+    {"id": "pump_primary_001", "circuit": "primary", "floor": "b2", "position": [-1, -9.5, -6.8], "rated_flow_m3_s": 0.02, "rated_head_Pa": 180000.0, "efficiency": 0.7},
+    {"id": "pump_secondary_001", "circuit": "secondary", "floor": "b2", "position": [-1, -5, -6.8], "rated_flow_m3_s": 0.018, "rated_head_Pa": 150000.0, "efficiency": 0.7},
+    {"id": "pump_greenhouse_001", "circuit": "secondary_greenhouse_branch", "floor": "b2", "position": [20, -10.7, -3.5], "rated_flow_m3_s": 0.01, "rated_head_Pa": 120000.0, "efficiency": 0.65}
+  ],
+  "valves": [
+    {"id": "valve_primary_iso_001", "type": "isolation", "circuit": "primary", "floor": "b2", "position": [-7.2, -8, -5.8]},
+    {"id": "valve_primary_iso_002", "type": "isolation", "circuit": "primary", "floor": "b2", "position": [-7.2, -8, -6.8]},
+    {"id": "valve_aux_reject_001", "type": "modulating", "circuit": "primary", "floor": "b2", "position": [0, -9, -6.8], "controls": "auxiliary_rejection"},
+    {"id": "valve_mix_robot_001", "type": "mixing", "circuit": "secondary", "floor": "gf", "position": [11, -9, 3.35], "zone": "zone_robot_lab"},
+    {"id": "valve_mix_seed_store_001", "type": "mixing", "circuit": "secondary", "floor": "b1", "position": [-11, -5.7, -0.7], "zone": "zone_seed_storage"},
+    {"id": "valve_mix_seed_test_001", "type": "mixing", "circuit": "secondary", "floor": "b1", "position": [-11, -9, -0.7], "zone": "zone_seed_testing"},
+    {"id": "valve_mix_greenhouse_001", "type": "mixing", "circuit": "secondary_greenhouse_branch", "position": [28, -7, -0.5], "zone": "zone_greenhouse_soil"}
+  ],
+  "tanks": [
+    {"id": "tank_buffer_001", "type": "thermal_buffer", "floor": "external", "position": [44, -10.7, -6.25], "volume_m3": 50.0, "heat_loss_W_per_K": 25.0},
+    {"id": "tank_verify_001", "type": "water_treatment_sidestream", "floor": "external", "position": [36, -10.7, -6.25], "volume_m3": 8.0, "note": "Closed-loop sidestream treatment and water-quality verification; a small bypass returns treated water to the pressurized loop."}
+  ],
+  "heat_pump": {"id": "hp_b2_001", "floor": "b2", "position": [4, -5, -5.3], "cop_heating": 4.0, "max_thermal_output_kW": 400.0, "enabled": true},
+  "dry_cooler": { "id": "drycooler_roof_001", "floor": "roof", "position": [0.0, -8.0, 18.8], "capacity_kW": 1500.0 },
+  "power_distribution": [
+    {"id": "pdu_f1_001", "floor": "f1", "position": [11, 5, 6.75], "rated_power_kW": 500.0},
+    {"id": "pdu_f2_001", "floor": "f2", "position": [11, 5, 11.25], "rated_power_kW": 500.0},
+    {"id": "pdu_f3_001", "floor": "f3", "position": [11, 5, 15.75], "rated_power_kW": 500.0}
+  ],
+  "manifolds": [
+    {"id": "manifold_supply_f1_001", "floor": "f1", "circuit": "primary", "role": "supply", "position": [-13, -9.5, 7.9]},
+    {"id": "manifold_return_f1_001", "floor": "f1", "circuit": "primary", "role": "return", "position": [-13, -8.3, 8.45]},
+    {"id": "manifold_supply_f2_001", "floor": "f2", "circuit": "primary", "role": "supply", "position": [-13, -9.5, 12.4]},
+    {"id": "manifold_return_f2_001", "floor": "f2", "circuit": "primary", "role": "return", "position": [-13, -8.3, 12.95]},
+    {"id": "manifold_supply_f3_001", "floor": "f3", "circuit": "primary", "role": "supply", "position": [-13, -9.5, 16.9]},
+    {"id": "manifold_return_f3_001", "floor": "f3", "circuit": "primary", "role": "return", "position": [-13, -8.3, 17.45]}
+  ],
+  "lab_equipment": [
+    { "id": "robot_arm_gf_001", "floor": "gf", "position": [-10.0, -4.0, 0.3] },
+    { "id": "robot_arm_gf_002", "floor": "gf", "position": [-2.0, -4.0, 0.3] },
+    { "id": "robot_arm_gf_003", "floor": "gf", "position": [6.0, -4.0, 0.3] },
+    { "id": "robot_test_cell_gf_001", "floor": "gf", "position": [10.0, 4.0, 1.2] }
+  ],
+  "seed_equipment": [
+    { "id": "seed_rack_b1_001", "floor": "b1", "position": [-11.0, -4.0, -2.0] },
+    { "id": "seed_rack_b1_002", "floor": "b1", "position": [-7.0, -4.0, -2.0] },
+    { "id": "seed_rack_b1_003", "floor": "b1", "position": [-11.0, 4.0, -2.0] },
+    { "id": "growth_chamber_b1_001", "floor": "b1", "position": [5.0, -4.0, -2.0] },
+    { "id": "growth_chamber_b1_002", "floor": "b1", "position": [10.0, -4.0, -2.0] },
+    { "id": "growth_chamber_b1_003", "floor": "b1", "position": [5.0, 4.0, -2.0] },
+    { "id": "growth_chamber_b1_004", "floor": "b1", "position": [10.0, 4.0, -2.0] }
+  ],
+  "thermal_zones": [
+    { "id": "zone_robot_lab", "floor": "gf", "position": [0.0, 0.0, 2.25], "size": [34.0, 20.0, 4.0] },
+    { "id": "zone_seed_storage", "floor": "b1", "position": [-9.0, 0.0, -2.0], "size": [16.0, 20.0, 3.5] },
+    { "id": "zone_seed_testing", "floor": "b1", "position": [9.0, 0.0, -2.0], "size": [16.0, 20.0, 3.5] },
+    { "id": "zone_greenhouse_soil", "position": [41.0, 0.0, 0.25], "size": [28.0, 16.0, 0.5] }
+  ],
+  "sensors": [
+    {"id": "sensor_primary_supply_T", "quantity": "temperature", "location": "pump_primary_001_out", "position": [-1, -9.5, -6.8]},
+    {"id": "sensor_primary_return_T", "quantity": "temperature", "location": "hx_b2_primary_001_in", "position": [-7.2, -8, -5.8]},
+    {"id": "sensor_secondary_supply_T", "quantity": "temperature", "location": "hp_b2_001_out", "position": [4, -5, -5.3]},
+    {"id": "sensor_secondary_return_T", "quantity": "temperature", "location": "hx_b2_primary_001_sec_in", "position": [-4.8, -6, -6.8]},
+    {"id": "sensor_buffer_T", "quantity": "temperature", "location": "tank_buffer_001", "position": [44, -10.7, -4.8]},
+    { "id": "sensor_greenhouse_soil_T", "quantity": "temperature", "location": "zone_greenhouse_soil", "position": [41.0, 0.0, 0.8] },
+    { "id": "sensor_seed_storage_T_RH", "quantity": "temperature_humidity", "location": "zone_seed_storage", "floor": "b1", "position": [-9.0, 2.0, -1.0] },
+    { "id": "sensor_seed_testing_T_RH", "quantity": "temperature_humidity", "location": "zone_seed_testing", "floor": "b1", "position": [9.0, 2.0, -1.0] }
+  ]
+}

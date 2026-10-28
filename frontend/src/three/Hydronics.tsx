@@ -1,8 +1,9 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { SceneObject, ScenePipe, StepRecord } from "../api/types";
 import type { PipeOverlay } from "../store";
+import { pipePath } from "./pipePath";
 import { tempColor } from "./colors";
 import { worldPosition, worldVector } from "./coordinates";
 import EngineeringLabel from "./Label";
@@ -10,32 +11,31 @@ import EngineeringLabel from "./Label";
 function conventionColor(pipe: ScenePipe): string {
   const role = pipe.role ?? "";
   if (pipe.circuit === "primary") {
-    return role === "return" || role === "rejection" || role === "rack_heat_pickup" ? "#ef554d" : "#318fe8";
+    return role === "return" || role === "rejection" || role === "rack_heat_pickup" ? "#ff302a" : "#087dff";
   }
-  return role === "return" || role === "sidestream" ? "#42d4e7" : role === "hx_outlet" ? "#f49a4a" : "#ef713d";
+  return role === "return" || role === "sidestream" ? "#087dff" : "#ff302a";
 }
 
 function FlowParticle({
   curve,
   phase,
   speed,
-  color,
 }: {
-  curve: THREE.CatmullRomCurve3;
+  curve: THREE.Curve<THREE.Vector3>;
   phase: number;
   speed: number;
-  color: string;
 }) {
   const ref = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const t = (clock.elapsedTime * speed + phase) % 1;
     ref.current.position.copy(curve.getPointAt(t));
+    ref.current.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), curve.getTangentAt(t).normalize());
   });
   return (
     <mesh ref={ref}>
-      <sphereGeometry args={[0.105, 10, 8]} />
-      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={3.2} toneMapped={false} />
+      <coneGeometry args={[0.16, 0.5, 8]} />
+      <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1.8} toneMapped={false} />
     </mesh>
   );
 }
@@ -56,12 +56,13 @@ function FlowPipe({
   const curve = useMemo(() => {
     const points = (pipe.points ?? []).map((point) => worldVector(point));
     if (points.length < 2) points.push(new THREE.Vector3());
-    return new THREE.CatmullRomCurve3(points, false, "catmullrom", 0.08);
+    return pipePath(points);
   }, [pipe.points]);
   const geometry = useMemo(
-    () => new THREE.TubeGeometry(curve, Math.max(24, (pipe.points?.length ?? 2) * 18), Math.max(0.045, (pipe.diameter_m ?? 0.08) / 2), 10, false),
+    () => new THREE.TubeGeometry(curve, Math.max(24, (pipe.points?.length ?? 2) * 18), Math.max(0.12, (pipe.diameter_m ?? 0.08) / 2), 10, false),
     [curve, pipe.diameter_m, pipe.points?.length],
   );
+  useEffect(() => () => geometry.dispose(), [geometry]);
   const state = step?.pipe_states?.[pipe.id];
   const flow = state?.mass_flow_kg_s ?? 0;
   const temperature = state?.temperature_C;
@@ -72,6 +73,7 @@ function FlowPipe({
   const visibleFlow = overlay !== "off" && flow > 0.001;
   const speed = 0.025 + Math.min(0.16, flow / 90);
   const midpoint = curve.getPointAt(0.5);
+  const arrowCount = Math.min(18, Math.max(2, Math.ceil(curve.getLength() / 5)));
 
   return (
     <group name={pipe.id}>
@@ -87,14 +89,14 @@ function FlowPipe({
           color={overlay === "off" ? "#53606a" : selected ? "#ffffff" : color}
           metalness={0.68}
           roughness={0.3}
-          emissive={selected ? color : "#000000"}
-          emissiveIntensity={selected ? 0.8 : 0.08}
+          emissive={color}
+          emissiveIntensity={selected ? 0.8 : 0.28}
           transparent={pipe.buried}
           opacity={pipe.buried ? 0.9 : 1}
         />
       </mesh>
-      {visibleFlow && [0, 0.25, 0.5, 0.75].map((phase) => (
-        <FlowParticle key={phase} curve={curve} phase={phase} speed={speed} color={color} />
+      {visibleFlow && Array.from({ length: arrowCount }, (_, i) => i / arrowCount).map((phase) => (
+        <FlowParticle key={phase} curve={curve} phase={phase} speed={speed} />
       ))}
       {selected && (
         <EngineeringLabel
