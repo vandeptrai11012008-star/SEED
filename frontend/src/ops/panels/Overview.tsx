@@ -4,8 +4,35 @@ import { Gauge, Metric } from "../Gauge";
 
 export function Overview() {
   const reports = useOps((s) => s.reports);
+  const sessionId = useOps((s) => s.sessionId);
+  const busy = useOps((s) => s.busy);
+  const running = useOps((s) => s.running);
+  const mode = useOps((s) => s.mode);
+  const scenario = useOps((s) => s.scenario);
+  const seed = useOps((s) => s.seed);
+  const appliedConfig = useOps((s) => s.appliedConfig);
+  const stepOnce = useOps((s) => s.stepOnce);
+  const setTab = useOps((s) => s.setTab);
+  const canQuickStep = Boolean(sessionId && !busy && !running && appliedConfig &&
+    mode === appliedConfig.mode && scenario === appliedConfig.scenario && seed === appliedConfig.seed);
   if (reports.length === 0) {
-    return <div className="ops-note">Press Resume or Step to begin the live run.</div>;
+    return (
+      <section className="card ops-welcome">
+        <div className="ops-welcome-icon" aria-hidden="true">◎</div>
+        <span className="ops-eyebrow">QUICK START</span>
+        <h2>Ready to inspect the digital twin</h2>
+        <p>Run a few steps, then follow the temperature, agent actions and safety decisions in real time.</p>
+        <ol>
+          <li>Choose a control mode and test scenario above.</li>
+          <li>Press Run, or advance a fixed number of steps.</li>
+          <li>Open 8 Agents or Event log to inspect every decision.</li>
+        </ol>
+        <div className="ops-welcome-actions">
+          <button className="primary" disabled={!canQuickStep} onClick={() => void stepOnce(1)}>▶ First step</button>
+          <button disabled={!canQuickStep} onClick={() => void stepOnce(24)}>Simulate 4 hours</button>
+        </div>
+      </section>
+    );
   }
   const last = reports[reports.length - 1];
   const m = last.metrics;
@@ -18,9 +45,20 @@ export function Overview() {
   const primaryStatus = m.primary_supply_C >= 44 ? "alarm"
     : m.primary_supply_C >= 42 ? "caution" : "ok";
   const unmetStatus = m.unmet_demand_W > 20000 ? "caution" : "ok";
+  const safetyTitle = m.primary_supply_C >= 45 ? "Temperature limit reached"
+    : primaryStatus === "caution" || primaryStatus === "alarm" ? "Coolant near the safety limit"
+    : "Coolant temperature in the safe band";
 
   return (
     <div className="ops-grid">
+      <section className={`ops-health-banner ${primaryStatus}`}>
+        <div>
+          <span className="ops-eyebrow">CURRENT OPERATING STATUS</span>
+          <h2>{safetyTitle}</h2>
+          <p>Primary supply {m.primary_supply_C.toFixed(1)} °C · 45 °C trip limit · {safety.length} safety interventions observed</p>
+        </div>
+        <button onClick={() => setTab("agents")}>Inspect agent decisions →</button>
+      </section>
       <section className="card" style={{ gridColumn: "1 / -1" }}>
         <h2>Key indicators · measured</h2>
         <div className="metrics">

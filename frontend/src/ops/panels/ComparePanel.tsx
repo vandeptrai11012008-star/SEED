@@ -26,8 +26,14 @@ export function ComparePanel() {
       <div className="ops-session">
         <span className="ops-stat">scenario <strong>{scenario}</strong></span>
         <span className="ops-stat">seed <strong>{seed}</strong></span>
-        <label>steps<input type="number" value={n} onChange={(e) => setN(Number(e.target.value))} /></label>
-        <button className="primary" disabled={comparing} onClick={() => void runCompare(n)}>
+        <label>steps (10 min each)<input type="number" min={1} max={240} value={n} onChange={(e) => setN(Number(e.target.value))} /></label>
+        <div className="ops-compare-presets" aria-label="Comparison duration presets">
+          {[12, 48, 96].map((steps) => (
+            <button key={steps} className={n === steps ? "active" : ""}
+              onClick={() => setN(steps)}>{steps / 6} h</button>
+          ))}
+        </div>
+        <button className="primary" disabled={comparing || !Number.isInteger(n) || n < 1 || n > 240} onClick={() => void runCompare(n)}>
           {comparing ? "Running A/B/C…" : "Run A vs B vs C"}
         </button>
       </div>
@@ -36,6 +42,7 @@ export function ComparePanel() {
 
       {cmp && (
         <>
+          <div className="ops-table-scroll" role="region" aria-label="Control mode comparison" tabIndex={0}>
           <table className="ops-table compare">
             <thead>
               <tr>
@@ -64,6 +71,7 @@ export function ComparePanel() {
               })}
             </tbody>
           </table>
+          </div>
 
           <section className="card">
             <h2>Honest verdict</h2>
