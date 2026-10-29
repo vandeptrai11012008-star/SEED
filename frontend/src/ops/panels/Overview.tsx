@@ -4,33 +4,19 @@ import { Gauge, Metric } from "../Gauge";
 
 export function Overview() {
   const reports = useOps((s) => s.reports);
-  const sessionId = useOps((s) => s.sessionId);
-  const busy = useOps((s) => s.busy);
-  const running = useOps((s) => s.running);
-  const mode = useOps((s) => s.mode);
-  const scenario = useOps((s) => s.scenario);
-  const seed = useOps((s) => s.seed);
-  const appliedConfig = useOps((s) => s.appliedConfig);
-  const stepOnce = useOps((s) => s.stepOnce);
   const setTab = useOps((s) => s.setTab);
-  const canQuickStep = Boolean(sessionId && !busy && !running && appliedConfig &&
-    mode === appliedConfig.mode && scenario === appliedConfig.scenario && seed === appliedConfig.seed);
   if (reports.length === 0) {
     return (
       <section className="card ops-welcome">
         <div className="ops-welcome-icon" aria-hidden="true">◎</div>
-        <span className="ops-eyebrow">QUICK START</span>
-        <h2>Ready to inspect the digital twin</h2>
-        <p>Run a few steps, then follow the temperature, agent actions and safety decisions in real time.</p>
+        <span className="ops-eyebrow">YOUR FIRST EXPERIMENT</span>
+        <h2>Kết quả mô phỏng sẽ hiện ở đây</h2>
+        <p>Bấm <strong>"Run 1 hour"</strong> phía trên (hoặc nút chạy thử trong hướng dẫn) để thấy nhiệt độ, đồ thị và các quyết định điều khiển.</p>
         <ol>
-          <li>Choose a control mode and test scenario above.</li>
-          <li>Press Run, or advance a fixed number of steps.</li>
-          <li>Open 8 Agents or Event log to inspect every decision.</li>
+          <li>Chạy một giờ thử nghiệm — không ảnh hưởng thiết bị thật.</li>
+          <li>Xem nhiệt độ và trạng thái an toàn tại Dashboard.</li>
+          <li>Mở <strong>8 Agents</strong> để xem lý do hệ thống đưa ra quyết định.</li>
         </ol>
-        <div className="ops-welcome-actions">
-          <button className="primary" disabled={!canQuickStep} onClick={() => void stepOnce(1)}>▶ First step</button>
-          <button disabled={!canQuickStep} onClick={() => void stepOnce(24)}>Simulate 4 hours</button>
-        </div>
       </section>
     );
   }
@@ -60,7 +46,7 @@ export function Overview() {
         <button onClick={() => setTab("agents")}>Inspect agent decisions →</button>
       </section>
       <section className="card" style={{ gridColumn: "1 / -1" }}>
-        <h2>Key indicators · measured</h2>
+        <h2>Key indicators · simulated</h2>
         <div className="metrics">
           <Metric label="GPU load" value={m.gpu_load_fraction * 100} unit="%" digits={0} />
           <Metric label="Primary supply" value={m.primary_supply_C} unit="°C" status={primaryStatus} />
