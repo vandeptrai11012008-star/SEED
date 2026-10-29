@@ -94,7 +94,9 @@ reopened with **Help / Start guide**; the walkthrough persists as seen in local
 browser storage. Basic controls (mode, scenario, auto-run, one-hour test) remain
 visible, while seed, speed, single-step, reset and JSON export live under
 **Advanced settings**. Running with newly selected mode/scenario/seed automatically
-creates a fresh session; no separate Apply action is required.
+creates a fresh session; no separate Apply action is required. The Forecast Lab
+and A/B/C comparison pages are grouped under **More experiments** so the first
+visit presents only Dashboard, Agents, and Event Log.
 
 - **Mode A:** rule-based baseline; **B:** reactive agents; **C:** agents with
   short-horizon MPC-lite look-ahead and explicit candidate scores.
