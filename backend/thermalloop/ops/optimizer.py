@@ -136,19 +136,28 @@ class MPCOptimizer:
         return OptimizerResult(best=scores[0], scoreboard=scores, branch_steps=branch_steps)
 
 
-def default_candidates(current_load: float) -> dict[str, dict[str, Any]]:
-    """A small, explicit grid of plans to evaluate each step.
+def default_candidates(
+    current_load: float,
+    current_setpoint_C: float = 55.0,
+) -> dict[str, dict[str, Any]]:
+    """Bounded coordinate-descent sweep over load and secondary setpoint.
 
-    We vary the two highest-leverage knobs -- GPU load and auxiliary rejection
-    level -- around the current operating point. Small and deterministic so the
-    look-ahead cost stays bounded.
+    A full Cartesian grid would be expensive. Sweep each control axis around
+    the current operating point, retaining full auxiliary rejection for safety.
     """
     loads = sorted({round(max(0.3, min(1.0, current_load + d)), 3)
                     for d in (-0.15, 0.0, 0.1)})
+    setpoints = sorted({round(max(45.0, min(62.0, current_setpoint_C + d)), 1)
+                        for d in (-5.0, 0.0, 5.0)})
     grid: dict[str, dict[str, Any]] = {}
     for load in loads:
-        # full rejection is the safe default; the optimiser varies load, which
-        # is the dominant safety/throughput lever. Keeping the grid small bounds
-        # the per-step look-ahead cost.
-        grid[f"load{load}"] = {"gpu_load_fraction": load, "aux_rejection_level": 1.0}
+        grid[f"L{load}"] = {
+            "gpu_load_fraction": load, "aux_rejection_level": 1.0,
+            "secondary_supply_setpoint_C": current_setpoint_C,
+        }
+    for sp in setpoints:
+        grid[f"S{sp:.0f}"] = {
+            "gpu_load_fraction": current_load, "aux_rejection_level": 1.0,
+            "secondary_supply_setpoint_C": sp,
+        }
     return grid
