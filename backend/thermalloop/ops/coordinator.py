@@ -79,6 +79,7 @@ class Coordinator:
         self._mpc_period = 3
         self._since_mpc = 999
         self._cached_optimised_ceiling: float | None = None
+        self._cached_optimised_setpoint: float | None = None
         self._last_best_peak = 0.0
         self._last_best_label = ""
         # Feed-forward: remember recent primary temperatures to estimate the
@@ -170,22 +171,33 @@ class Coordinator:
             warm = primary_C is not None and primary_C >= self.PRIMARY_SOFT_C - 2.0
             if self._since_mpc >= self._mpc_period or warm:
                 result = self.optimizer.optimise(
-                    self.engine, default_candidates(current_load), current_load)
+                    self.engine, default_candidates(current_load, sec_sp), current_load)
                 self.compute_cost += result.branch_steps
                 self.last_scoreboard = [c.as_dict() for c in result.scoreboard]
-                best_load = float(result.best.candidate.get("gpu_load_fraction", ceiling))
-                self._cached_optimised_ceiling = best_load
+                self._cached_optimised_ceiling = float(
+                    result.best.candidate.get("gpu_load_fraction", ceiling))
+                self._cached_optimised_setpoint = float(
+                    result.best.candidate.get("secondary_supply_setpoint_C", sec_sp))
                 self._since_mpc = 0
                 self._last_best_peak = result.best.peak_primary_C
                 self._last_best_label = result.best.label
-            # Optimiser may only tighten the ceiling, never loosen it.
             if self._cached_optimised_ceiling is not None:
+                # The optimiser may only tighten GPU load for safety.
                 optimised_ceiling = min(ceiling, self._cached_optimised_ceiling)
+                # Never let a cached efficiency choice override the protective
+                # secondary setpoint, especially when a sensor is untrusted.
+                adopted_sp = (self._cached_optimised_setpoint
+                              if regime != "protect" and primary_trusted else None)
+                changed = []
                 if optimised_ceiling < ceiling - 1e-6:
-                    rationale = (f"MPC look-ahead: best plan '{self._last_best_label}' "
-                                 f"(peak {self._last_best_peak:.1f}C); tighten ceiling "
-                                 f"{ceiling:.2f} -> {optimised_ceiling:.2f}")
+                    changed.append(f"ceiling {ceiling:.2f}->{optimised_ceiling:.2f}")
                     ceiling = optimised_ceiling
+                if adopted_sp is not None and abs(adopted_sp - sec_sp) > 0.1:
+                    changed.append(f"secondary {sec_sp:.0f}->{adopted_sp:.0f}C")
+                    sec_sp = adopted_sp
+                if changed:
+                    rationale = (f"MPC '{self._last_best_label}' "
+                                 f"(peak {self._last_best_peak:.1f}C): " + ", ".join(changed))
                 plan_source = "mpc"
 
         plan = CoordinatorPlan(
