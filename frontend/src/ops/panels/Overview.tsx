@@ -7,16 +7,11 @@ export function Overview() {
   const setTab = useOps((s) => s.setTab);
   if (reports.length === 0) {
     return (
-      <section className="card ops-welcome">
-        <div className="ops-welcome-icon" aria-hidden="true">◎</div>
-        <span className="ops-eyebrow">YOUR FIRST EXPERIMENT</span>
-        <h2>Kết quả mô phỏng sẽ hiện ở đây</h2>
-        <p>Bấm <strong>"Run 1 hour"</strong> phía trên (hoặc nút chạy thử trong hướng dẫn) để thấy nhiệt độ, đồ thị và các quyết định điều khiển.</p>
-        <ol>
-          <li>Chạy một giờ thử nghiệm — không ảnh hưởng thiết bị thật.</li>
-          <li>Xem nhiệt độ và trạng thái an toàn tại Dashboard.</li>
-          <li>Mở <strong>8 Agents</strong> để xem lý do hệ thống đưa ra quyết định.</li>
-        </ol>
+      <section className="card ops-welcome" aria-label="Simulation status">
+        <span className="ops-eyebrow">READY TO SIMULATE</span>
+        <h2>No results yet</h2>
+        <p>Select a control strategy and scenario above, then click <strong>Run 1 hour</strong> or <strong>Auto run</strong>.</p>
+        <p className="ops-empty-note">Simulation only. No physical equipment is controlled.</p>
       </section>
     );
   }
