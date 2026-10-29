@@ -409,3 +409,65 @@ def test_mode_c_never_worse_than_b_on_violations():
         cmp = compare_modes(scenario=scen, seed=3, n_steps=36, start_hour=12,
                             drivers={"gpu_load_peak_fraction": 1.0})
         assert cmp.per_mode["C"]["temp_violation_steps"] <= cmp.per_mode["B"]["temp_violation_steps"]
+
+
+# -------------------------------------------------- PI + multivariable MPC
+def test_infrastructure_agent_uses_pi_controller_live():
+    """The pump must actually receive PI decisions during a normal run."""
+    rt = OpsRuntime(mode="B", scenario="none", seed=5, timestep_s=600, start_hour=2,
+                    drivers={"gpu_load_base_fraction": 0.4, "gpu_load_peak_fraction": 0.5})
+    rt.run(14)
+    pi_decisions = [d for r in rt.reports for d in r.decisions
+                    if d.get("actuator") == "primary_pump_speed"
+                    and "PI hold" in str(d.get("rationale", ""))]
+    assert pi_decisions, "PI controller never drove the pump"
+
+
+def test_infrastructure_pi_respects_safety_floor_and_full_flow():
+    from thermalloop.ops.agents.infrastructure import InfrastructureAgent
+
+    agent = InfrastructureAgent()
+    board = Blackboard()
+    board.set_time(0.0)
+    board.write("target::primary_supply_band_C", 40.0, t_s=0.0)
+    board.write("sensor_primary_supply_T", 41.0, t_s=0.0, quality="ok")
+    assert agent.act(board, 0.0).commits[0].value == 1.0
+
+    board.write("sensor_primary_supply_T", 30.0, t_s=0.0, quality="ok")
+    assert agent.act(board, 0.0).commits[0].value >= 0.7
+
+
+def test_mpc_candidates_vary_load_and_setpoint():
+    from thermalloop.ops.optimizer import default_candidates
+
+    grid = default_candidates(current_load=0.8, current_setpoint_C=55.0)
+    loads = {c["gpu_load_fraction"] for c in grid.values()}
+    setpoints = {c["secondary_supply_setpoint_C"] for c in grid.values()}
+    assert len(loads) >= 2 and len(setpoints) >= 2
+    assert len(grid) <= 8
+
+
+def test_mpc_protect_regime_keeps_safe_secondary_setpoint_with_untrusted_sensor():
+    """Cached energy optimisation must not defeat sensor-loss protection."""
+    from thermalloop.ops.coordinator import Coordinator
+
+    coordinator = Coordinator(engine=SteppedEngine())
+    coordinator._cached_optimised_ceiling = 1.0
+    coordinator._cached_optimised_setpoint = 62.0
+    coordinator._since_mpc = 0
+    board = Blackboard()
+    board.set_time(0.0)
+    board.write("sensor_primary_supply_T", 38.0, t_s=0.0, quality="suspect")
+    plan = coordinator.plan(board, 0.0)
+    assert plan.regime == "protect"
+    assert plan.secondary_supply_C == coordinator.SEC_SETPOINT_PROTECT_C
+
+
+def test_mode_c_saves_energy_under_high_heat_demand():
+    """MPC should save electricity for similar useful heat in this benchmark."""
+    cmp = compare_modes(scenario="none", seed=3, n_steps=48, start_hour=0,
+                        drivers={"ambient_mean_C": -5.0, "gpu_load_base_fraction": 0.6,
+                                 "gpu_load_peak_fraction": 0.8})
+    b, c = cmp.per_mode["B"], cmp.per_mode["C"]
+    assert abs(b["useful_heat_kWh"] - c["useful_heat_kWh"]) < 1.0
+    assert c["total_power_kWh"] <= b["total_power_kWh"] + 1e-6
