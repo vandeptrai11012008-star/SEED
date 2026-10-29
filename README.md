@@ -82,9 +82,21 @@ rack counts, hydraulic routing or physics inputs.
 
 ## Autonomous Operations Center (simulation only)
 
-Open `/?ops=1` (or use **Operations · Agents** in the 3D header) to monitor and
+Open `/?ops=1` (or **Try AI Agents** in the 3D view) to monitor and
 control the simulated facility using eight deterministic operational agents.
 The original 3D illustration and 1:1 simulation remain available at `/`.
+
+**First-time visitor path:** The 3D landing page offers a two-choice beginner
+guide: a guided facility tour or a one-click jump to the agent simulator. The
+control room then walks visitors through **run a one-hour example → view the
+results → inspect agent decisions and events**. The guide can be dismissed and
+reopened with **Help / Start guide**; the walkthrough persists as seen in local
+browser storage. Basic controls (mode, scenario, auto-run, one-hour test) remain
+visible, while seed, speed, single-step, reset and JSON export live under
+**Advanced settings**. Running with newly selected mode/scenario/seed automatically
+creates a fresh session; no separate Apply action is required. The Forecast Lab
+and A/B/C comparison pages are grouped under **More experiments** so the first
+visit presents only Dashboard, Agents, and Event Log.
 
 - **Mode A:** rule-based baseline; **B:** reactive agents; **C:** agents with
   short-horizon MPC-lite look-ahead and explicit candidate scores.
@@ -93,9 +105,8 @@ The original 3D illustration and 1:1 simulation remain available at `/`.
   arbiter that clamps unsafe actions.
 - The UI includes agent decisions, event timelines, scenario/fault injection,
   three-mode comparisons and experiment records.
-- The control room groups **Run/Pause**, single-step and ten-step actions,
-  speed, reset and scenario selection. Changing mode/scenario/seed requires
-  **Apply changes** before the next run. A status strip shows simulated time,
+- The control room groups **Run/Pause**, a one-hour example action and scenario
+  selection. A status strip shows simulated time,
   step count and event count; the dashboard highlights thermal limits.
 - Agent search, expanded event payloads and a **JSON export** help inspect
   decisions. Exports include only the retained last 400 step reports and last
