@@ -11,6 +11,9 @@ const TABS: { id: OpsTab; label: string }[] = [
   { id: "overview", label: "Dashboard" },
   { id: "agents", label: "8 Agents" },
   { id: "timeline", label: "Event log" },
+];
+
+const ADVANCED_TABS: { id: OpsTab; label: string }[] = [
   { id: "lab", label: "Forecast lab" },
   { id: "compare", label: "Compare A/B/C" },
 ];
@@ -98,6 +101,17 @@ export default function OpsApp() {
             {t.label}
           </button>
         ))}
+        <details className="ops-more-tabs">
+          <summary>⚙ More experiments</summary>
+          <div className="ops-more-choices">
+            {ADVANCED_TABS.map((t) => (
+              <button key={t.id} className={tab === t.id ? "active" : ""}
+                onClick={() => setTab(t.id)} aria-current={tab === t.id ? "page" : undefined}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </details>
       </nav>
 
       {loading && <div className="ops-note" role="status">Connecting to the operations engine…</div>}
