@@ -406,6 +406,8 @@ td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; color: #dce8
 .first-visit-secondary:focus-visible { outline: 3px solid #f6be4f; outline-offset: 3px; }
 @media (max-width: 850px) {
   .agents-shortcut { top: 78px; left: 16px; right: auto; bottom: auto; }
+  .illustration-mode:has(.first-visit-card) .agents-shortcut,
+  .illustration-mode:has(.first-visit-card) .flow-guide { display: none; }
 }
 .app:not(.illustration-mode) .view-toggle { top: 64px; right: 365px; }
 .scene-brand { position: absolute; left: 30px; top: 24px; pointer-events: none; color: #102d40; }
@@ -444,7 +446,7 @@ td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; color: #dce8
 }
 @media (max-width: 560px) {
   .flow-guide { top: auto; bottom: 150px; width: 220px; max-height: 32vh; overflow-y: auto; }.scene-brand h1 { font-size: 21px; }.scene-brand .eyebrow { font-size: 8px; }
-  .scene-toolbar { gap: 0; width: calc(100% - 24px); justify-content: center; }.scene-toolbar button { padding: 9px; font-size: 10px; }
+  .scene-toolbar { gap: 0; width: calc(100% - 24px); justify-content: center; }.scene-toolbar button { min-width: 0; padding: 9px 4px; font-size: 9px; }
   .illustration-mode.tools-open > .right { right: 12px; width: calc(100% - 24px); }
 }
 
