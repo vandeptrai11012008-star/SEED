@@ -34,7 +34,7 @@ oversold.
 - **FastAPI ops API** (`ops/api.py`) and **React ops UI** (`frontend/src/ops/`):
   overview, per-agent, event timeline, lab (predicted-vs-measured), mode
   comparison, scenario/fault selection. Typecheck + production build pass.
-- **Integrated SEED tests**: 38 pass (6 pipe-routing, 30 ops-layer, 2 operations API).
+- **Integrated SEED tests**: 43 pass (6 pipe-routing, 35 ops-layer, 2 operations API).
   The GitHub workflow additionally checks the frontend production build,
   HTTP API endpoints, and Docker startup.
 
@@ -61,7 +61,8 @@ oversold.
 
 ## Intelligence upgrade (look-ahead planning)
 The coordinator in mode C now runs an **MPC-lite optimiser** (`ops/optimizer.py`):
-each re-plan it forks the engine, rolls a small grid of candidate load plans
+each re-plan it forks the engine, rolls a bounded set of load and secondary
+setpoint candidates
 over a short horizon, scores each with an explicit public objective (safety
 violations >> unmet heat > energy > recovered heat, with a small switching
 penalty), and picks the lowest-cost plan. The optimiser may only *tighten* the
@@ -70,13 +71,14 @@ make the plant safer/greener but never less safe. The full candidate scoreboard
 is attached to the coordinator's proposal so the UI can show *which* plans were
 evaluated and *why* one was chosen -- verifiable optimality, not a black box.
 
-Cost is bounded: a 3-plan grid, horizon 5, re-planned every 3 steps (and
+Cost is bounded: approximately 6 candidate plans, horizon 5, re-planned every 3 steps (and
 immediately whenever the loop is warm, so safety response is never delayed).
 
-Honest outcome: in a well-sized plant operating within safe scenarios, the
-optimiser *confirms* the reactive policy is already near-optimal rather than
-overriding it -- so mode C matches mode B on outcomes while paying a modest
-look-ahead compute cost. The comparison reports this plainly. A naive
+Measured outcome: with high heating demand (ambient −5 °C, seed 3, 48 steps),
+mode C used about 536 kWh versus 588 kWh for mode B (~9% less electricity)
+while delivering approximately the same useful heat (1733 kWh) and recording
+zero temperature violations. With low heat demand modes B/C may match the
+baseline. The comparison reports this plainly. A naive
 "feed-forward on the temperature trend" variant was tried and **removed**: it
 made the agents oscillate and spike pump energy without reducing violations,
 which the experiments showed clearly. Stable, auditable look-ahead beat a
@@ -93,17 +95,18 @@ The agents now operate the *entire* plant, not a subset:
   measured state, and publishes per-agent targets (load ceiling, secondary
   setpoint, primary band). It owns no actuator -- the single-writer rule is
   intact; agents track its targets. This is the top-level objective layer.
-- **Goal-seeking control** (`ops/control.py`): a PI controller with anti-windup
-  and a bounded adaptive-gain self-tuner. Agents now hold setpoints smoothly and
-  trim proportionally near limits instead of switching coarsely; the
-  Infrastructure agent biases pump flow HIGH for safety and only trims with
-  clear thermal margin.
-- **Verified result** (included regression suite passes): under `pump_degradation` the rule-based
-  baseline (mode A) drives the loop to ~53 °C with several limit violations,
-  while the upgraded agents hold it under the 45 °C trip with **zero
-  violations**, trading some job throughput for safety -- an honest, measured
-  tradeoff. In normal scenarios the agents match the baseline's throughput while
-  staying in band.
+- **Goal-seeking control** (`ops/control.py`): the Infrastructure agent now
+  actually uses the PI controller with anti-windup and a bounded adaptive-gain
+  tuner to drive primary pump speed. A protective override commands full flow
+  when the loop reaches 39 °C, and PI output never goes below 0.7. A separate
+  regression test confirms that a cached MPC setpoint cannot override the
+  coordinator's protective setpoint when the primary sensor is untrusted.
+- **Conditional safety benefit**: in a `pump_degradation` test (seed 3,
+  start hour 12, 48 steps, peak GPU load 1.0), mode A recorded 8 temperature
+  violations while modes B/C recorded 3. This is not universal: at seed 7,
+  start hour 0, the same fault produced 3 violations in A and 4 in B/C.
+  More scenario coverage and calibration are required before claiming robust
+  superiority.
 
 ## Reviewed, fixed, and verified (hardening pass)
 A behavioural review surfaced issues that are now fixed and regression-tested
@@ -127,14 +130,11 @@ A behavioural review surfaced issues that are now fixed and regression-tested
 
 ## Honest finding on mode C (not engineered away)
 Mode C's forecaster uses the *operational model*, which does not know about
-externally injected faults (a failing dry cooler, a degrading pump). So in
-those fault scenarios the forecast stays benign and mode C behaves like mode B
--- the comparison reports this plainly rather than hiding it. Where the agents
-clearly earn their keep is scenarios like `pump_degradation`, where the
-rule-based baseline (mode A) can drive the loop to ~53 °C with several
-temperature-limit violations while the agent modes keep it in band. We did not
-tune anything to make mode C win; the `cooling_derate` ("heat wave") scenario
-was added specifically as an honest stress test.
+externally injected faults (a failing dry cooler, a degrading pump). The
+forecast can therefore miss these disturbances. In the `pump_degradation`
+seed-7 test, neither agent mode prevented more violations than mode A.
+The `cooling_derate` stress case and varying random seeds reveal such gaps;
+these results must be shown rather than hidden.
 
 ## Would need real data
 - Calibrating the model (UA values, pump curves, soil properties, zone
