@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useOps, type OpsTab } from "./opsStore";
 import { Overview } from "./panels/Overview";
 import { Agents } from "./panels/Agents";
@@ -30,26 +30,13 @@ const MODE_LABELS: Record<string, string> = {
   C: "C · Agents + forecast",
 };
 
-function firstVisitGuideVisible() {
-  if (new URLSearchParams(window.location.search).get("guide") === "1") return true;
-  try { return window.localStorage.getItem("thermalloop_ops_intro_seen") !== "1"; }
-  catch { return true; }
-}
-
 export default function OpsApp() {
-  const [showGuide, setShowGuide] = useState(firstVisitGuideVisible);
   const init = useOps((s) => s.init);
   const loading = useOps((s) => s.loading);
   const error = useOps((s) => s.error);
   const meta = useOps((s) => s.meta);
   const tab = useOps((s) => s.tab);
   const setTab = useOps((s) => s.setTab);
-
-  const hideGuide = () => {
-    setShowGuide(false);
-    try { window.localStorage.setItem("thermalloop_ops_intro_seen", "1"); }
-    catch { /* Storage is optional. */ }
-  };
 
   useEffect(() => {
     void init();
@@ -77,9 +64,6 @@ export default function OpsApp() {
           </p>
         </div>
         <div className="ops-header-actions">
-          <button className="ops-help-link" onClick={() => setShowGuide(!showGuide)} aria-expanded={showGuide}>
-            ❔ {showGuide ? "Hide guide" : "Start guide"}
-          </button>
           <span className={`ops-simulation-badge ${meta?.real_device_enabled ? "unsafe" : ""}`}>
             {meta?.real_device_enabled ? "HARDWARE ENABLED" : "● SIMULATION ONLY"}
           </span>
@@ -87,7 +71,6 @@ export default function OpsApp() {
         </div>
       </header>
 
-      {showGuide && <GettingStarted onDismiss={hideGuide} />}
       <SessionBar />
 
       <nav className="ops-tabs" aria-label="Operations pages">
@@ -126,66 +109,9 @@ export default function OpsApp() {
       </main>
 
       <footer className="ops-footer">
-        Deterministic simplified engineering model — not calibrated, not measured data.
-        No confidence scores are fabricated; experiments store measured branch outcomes only.
+        Simulation only · Simplified physics model · Not calibrated against measured data.
       </footer>
     </div>
-  );
-}
-
-function GettingStarted({ onDismiss }: { onDismiss: () => void }) {
-  const reports = useOps((s) => s.reports);
-  const tab = useOps((s) => s.tab);
-  const setTab = useOps((s) => s.setTab);
-  const busy = useOps((s) => s.busy);
-  const loading = useOps((s) => s.loading);
-  const running = useOps((s) => s.running);
-  const sessionId = useOps((s) => s.sessionId);
-  const appliedConfig = useOps((s) => s.appliedConfig);
-  const mode = useOps((s) => s.mode);
-  const scenario = useOps((s) => s.scenario);
-  const seed = useOps((s) => s.seed);
-  const startSession = useOps((s) => s.startSession);
-  const hasSteps = reports.length > 0;
-  const step = !hasSteps ? 1 : tab === "agents" ? 3 : tab === "timeline" ? 4 : 2;
-  const needsNewSession = !sessionId || !appliedConfig || mode !== appliedConfig.mode || scenario !== appliedConfig.scenario || seed !== appliedConfig.seed;
-
-  const runExample = async () => {
-    if (needsNewSession) await startSession();
-    if (useOps.getState().sessionId) {
-      await useOps.getState().stepOnce(6); // 6 × 10 minutes = 1 simulated hour.
-      setTab("overview");
-    }
-  };
-
-  return (
-    <section className="ops-getting-started" aria-label="Beginner's guide">
-      <div className="ops-getting-title">
-        <span className="ops-eyebrow">👋 NEW HERE? · DÀNH CHO NGƯỜI MỚI</span>
-        <h2>Thử mô phỏng trong 3 bước</h2>
-        <p>Chưa cần chỉnh thông số. Chạy một ví dụ, xem kết quả rồi tìm hiểu AI Agents đã làm gì.</p>
-        <button className="ops-guide-dismiss" onClick={onDismiss}>Ẩn hướng dẫn ×</button>
-      </div>
-      <ol className="ops-guide-steps">
-        <li className={step === 1 ? "current" : "done"}><b>1</b><span><strong>Chạy ví dụ</strong><small>1 giờ mô phỏng</small></span></li>
-        <li className={step === 2 ? "current" : step > 2 ? "done" : ""}><b>2</b><span><strong>Xem kết quả</strong><small>Nhiệt độ và an toàn</small></span></li>
-        <li className={step === 3 ? "current" : step > 3 ? "done" : ""}><b>3</b><span><strong>Xem AI Agents</strong><small>Quyết định & sự kiện</small></span></li>
-      </ol>
-      <div className="ops-guide-action">
-        {!hasSteps ? (
-          <button className="primary" disabled={busy || loading || running} onClick={() => void runExample()}>
-            {busy || loading ? "Đang chuẩn bị…" : "▶ Bắt đầu chạy thử 1 giờ"}
-          </button>
-        ) : tab === "agents" ? (
-          <button className="primary" onClick={() => setTab("timeline")}>Xem nhật ký sự kiện →</button>
-        ) : tab === "timeline" ? (
-          <button className="primary" onClick={() => { setTab("overview"); onDismiss(); }}>✓ Xong · Về kết quả</button>
-        ) : (
-          <button className="primary" onClick={() => setTab("agents")}>Xem quyết định AI Agents →</button>
-        )}
-        <small>{hasSteps ? `Đã chạy ${reports.length} bước gần nhất. Bạn có thể thử kịch bản khác ở bên dưới.` : "Mô phỏng thử nghiệm, không điều khiển thiết bị thật."}</small>
-      </div>
-    </section>
   );
 }
 
@@ -261,8 +187,8 @@ function SessionBar() {
       <div className="ops-command-head">
         <div>
           <span className="ops-eyebrow">SIMULATION CONTROLS</span>
-          <h2>Chọn tình huống, rồi bấm Run</h2>
-          <p>Mỗi bước = 10 phút trong mô hình. Các chỉ số là dữ liệu mô phỏng.</p>
+          <h2>Simulation controls</h2>
+          <p>Select a strategy and scenario to evaluate the simulated system response.</p>
         </div>
         <div className={`ops-run-status ${statusTone}`} role="status" aria-live="polite">
           <span className="ops-status-dot" /> {status}
@@ -271,14 +197,14 @@ function SessionBar() {
 
       <div className="ops-command-body">
         <div className="ops-fields">
-          <label>Ai điều khiển? / Control mode
+          <label>Control strategy
             <select value={mode} disabled={running || busy || loading} onChange={(e) => configure({ mode: e.target.value })}>
               {Object.entries(meta?.modes ?? { A: "Rules", B: "Agents", C: "Agents + forecast" }).map(([k, v]) => (
                 <option key={k} value={k}>{MODE_LABELS[k] ?? `${k} · ${v}`}</option>
               ))}
             </select>
           </label>
-          <label>Chuyện gì xảy ra? / Test scenario
+          <label>Test scenario
             <select value={scenario} disabled={running || busy || loading} onChange={(e) => configure({ scenario: e.target.value })}>
               {Object.entries(meta?.scenarios ?? { ai_load_spike: "AI load spike" }).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
@@ -296,7 +222,7 @@ function SessionBar() {
       </div>
 
       <details className="ops-advanced">
-        <summary>⚙ Advanced settings · manual steps, speed, reset, export</summary>
+        <summary>⚙ Advanced controls</summary>
         <div className="ops-advanced-body">
           <div className="ops-fields ops-advanced-fields">
             <label>Random seed
