@@ -10,10 +10,6 @@ export default function App() {
   const illustration = useStore((s) => s.illustration);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
-  const [welcomeOpen, setWelcomeOpen] = useState(() => {
-    try { return window.localStorage.getItem("thermalloop_intro_seen") !== "1"; }
-    catch { return true; }
-  });
   const init = useStore((s) => s.init);
   const loading = useStore((s) => s.loading);
   const error = useStore((s) => s.error);
@@ -23,18 +19,6 @@ export default function App() {
     if (selectedId) setToolsOpen(true);
   }, [selectedId]);
   const scene = useStore((s) => s.scene);
-
-  const dismissWelcome = () => {
-    setWelcomeOpen(false);
-    try { window.localStorage.setItem("thermalloop_intro_seen", "1"); }
-    catch { /* Private browsing can disable storage. */ }
-  };
-
-  const startGuidedTour = () => {
-    dismissWelcome();
-    useStore.getState().setIllustration(false);
-    useStore.getState().startPresentation();
-  };
 
   useEffect(() => {
     init();
@@ -74,49 +58,32 @@ export default function App() {
         <span className="badge">{scene?.counts.floors ?? 6} floors · {scene?.counts.gpu_racks ?? 0} GPU racks</span>
         <span className="badge">{result?.mode ?? "loading"}</span>
         <button className="present-button" onClick={() => useStore.getState().startPresentation()}>
-          ▶ Guided tour
+          ▶ Presentation
         </button>
         <a className="ops-button" href="?ops=1" title="Open the multi-agent Operations Center">
-          🤖 Test AI agents
+          AI Operations
         </a>
         <span className="disclaimer">
           {result?.disclaimer ?? "Simplified engineering simulation — not measured data."}
         </span>
       </header>
 
-      <button className="view-toggle" onClick={() => {
-        useStore.getState().setIllustration(!illustration);
+      {!illustration && <button className="view-toggle" onClick={() => {
+        useStore.getState().setIllustration(true);
         setToolsOpen(false);
-      }}>{illustration ? "Advanced 3D controls ↗" : "← Back to 3D overview"}</button>
+      }}>← 3D overview</button>}
       <LeftPanel />
 
       <div className="canvas-wrap">
         <Viewer />
         {illustration && <>
-          <a className="agents-shortcut" href="?ops=1" aria-label="Open AI Agents Operations Center">
-            <span aria-hidden="true">🤖</span> Try AI Agents
-          </a>
-          {welcomeOpen && (
-            <section className="first-visit-card" aria-label="Getting started" aria-labelledby="first-visit-title">
-              <span className="first-visit-kicker">👋 START HERE · BẮT ĐẦU</span>
-              <h2 id="first-visit-title">Lần đầu vào ThermalLoop?</h2>
-              <p>Chọn một cách khám phá. Bạn không cần biết về mô phỏng hay AI trước.</p>
-              <button className="first-visit-primary" onClick={startGuidedTour}>
-                <span className="first-visit-number">1</span>
-                <span><strong>Xem hướng dẫn 3D</strong><small>Tour có hướng dẫn qua các tầng của tòa nhà</small></span>
-                <span aria-hidden="true">→</span>
-              </button>
-              <a className="first-visit-secondary" href="?ops=1&guide=1" onClick={dismissWelcome}>
-                <span className="first-visit-number">2</span>
-                <span><strong>Chạy thử AI Agents</strong><small>Một nút chạy mẫu, sau đó xem kết quả</small></span>
-                <span aria-hidden="true">→</span>
-              </a>
-              <button className="first-visit-skip" onClick={dismissWelcome}>Để tôi tự khám phá / Skip</button>
-            </section>
-          )}
+          <nav className="scene-quick-nav" aria-label="Main navigation">
+            <button onClick={() => { useStore.getState().setIllustration(false); setToolsOpen(false); }}>3D Controls</button>
+            <a href="?ops=1">AI Operations →</a>
+          </nav>
           <div className="scene-brand"><span className="eyebrow">THERMALLOOP AI CENTER</span><h1>Powered by AI.<br />Growing a greener future.</h1><p>Recovering heat · Cultivating the future</p></div>
           <aside className={`flow-guide ${legendOpen ? "" : "collapsed"}`} aria-label="Heat flow legend">
-            <button className="guide-heading" onClick={() => setLegendOpen(!legendOpen)} aria-expanded={legendOpen}>The heat recovery loop <span>{legendOpen ? "−" : "+"}</span></button>
+            <button className="guide-heading" onClick={() => setLegendOpen(!legendOpen)} aria-expanded={legendOpen}>Heat recovery loop <span>{legendOpen ? "−" : "+"}</span></button>
             {legendOpen && <>
               <div className="flow-key"><i className="cold" />Cool water · GPU supply / heating return</div>
               <div className="flow-key"><i className="hot" />Hot water · GPU return / heating supply</div>
@@ -135,9 +102,8 @@ export default function App() {
           <nav className="scene-toolbar" aria-label="View controls">
             <button onClick={() => useStore.getState().setCameraPreset("front_cutaway")}>↺ Overview</button>
             <button onClick={() => useStore.getState().setCameraPreset("greenhouse")}>Greenhouse</button>
-            <button onClick={() => useStore.getState().setCameraPreset("underground")}>B2 plant</button>
-            <button aria-pressed={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}>{toolsOpen ? "Close details" : "Details"}</button>
-            <button aria-expanded={welcomeOpen} onClick={() => { setWelcomeOpen(!welcomeOpen); setLegendOpen(false); }}>❔ Help</button>
+            <button onClick={() => useStore.getState().setCameraPreset("underground")}>Energy plant</button>
+            <button aria-pressed={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}>{toolsOpen ? "Close details" : "Inspect"}</button>
           </nav>
           <div className="scene-footnote"><span className="status-dot" />{loading ? "Running simulation…" : "Simplified physics simulation"}<span>Illustrative scale · Explore the 1:1 model in Simulation view</span></div>
         </>}
