@@ -95,8 +95,9 @@ with changed settings. Forecast Lab and A/B/C comparisons remain accessible
 under **More experiments**. All visible interface text is in English; no
 first-visit walkthrough or onboarding overlay obscures the model.
 
-- **Mode A:** rule-based baseline; **B:** reactive agents; **C:** agents with
-  short-horizon MPC-lite look-ahead and explicit candidate scores.
+- **Mode A:** rule-based baseline; **B:** reactive agents with PI-based primary
+  pump control; **C:** agents with bounded multivariable MPC-lite look-ahead
+  (GPU load and secondary supply setpoint) and explicit candidate scores.
 - A supervisory coordinator proposes `protect`, `recover` or `conserve`
   targets, with single-writer actuator ownership and an independent safety
   arbiter that clamps unsafe actions.
